@@ -24,6 +24,35 @@ NAS 側に git / Node / ソースコードは不要。置くのは `docker-compo
 
 ## 2. 初回: NAS 側のセットアップ
 
+### 2-A. 旧 kakeibovs (NAS 上で docker build する方式) が既に動いている場合 ← 通常はこちら
+
+既存の DB を引き継いだまま新方式へ切り替える。SSH でログインして 3 コマンド。
+
+```sh
+cd /volume1/docker/kakeibovs          # 旧 deploy-nas.ps1 の -NasDeployDir と同じ場所
+wget -O migrate-nas.sh https://raw.githubusercontent.com/HigeMaguro/kakeibo_VSCode/main/scripts/migrate-nas.sh
+sh migrate-nas.sh
+```
+
+`migrate-nas.sh` の動作:
+
+| 手順 | 内容 |
+|---|---|
+| 1 | 旧コンテナ `kakeibo` の `/app/data` マウント元を確認し、`data/kakeibo.db` があることを検証 (別の場所にあれば `data/` へコピー) |
+| 2 | `data/` を `backups/pre-migrate_<日時>/` に丸ごとコピー (切り戻し用) |
+| 3 | 旧ソース (`app/ server/ server.js Dockerfile docker-compose.yml` 等) を `old_src_<日時>/` に退避。削除はしない |
+| 4 | `docker-compose.prod.yml` と `update-nas.sh` を GitHub から取得 |
+| 5 | 旧コンテナ停止・削除 → GHCR から pull → 起動。`data/` は同じフォルダーなので DB はそのまま |
+| 6 | `/api/version` で新バージョンを表示 |
+
+ブラウザで取引データが表示されることを確認したら、`old_src_*` は削除してよい。
+**切り戻し**: `docker compose -f docker-compose.prod.yml down && cd old_src_<日時> && docker compose up -d`。
+DB のスキーマ変更はカラム追加のみ (後方互換) なので、新版で起動した DB を旧版に戻しても動作する。念のため `backups/pre-migrate_*` も残る。
+
+> GHCR のパッケージが Private の場合は、実行前に §1 の `docker login ghcr.io` を済ませておくこと。
+
+### 2-B. まっさらな NAS に新規インストールする場合
+
 UGREEN NAS に SSH でログインして実行 (UGOS の Docker GUI でも同等の操作が可能)。
 
 ```sh
@@ -34,9 +63,6 @@ mkdir -p /volume1/docker/kakeibovs && cd /volume1/docker/kakeibovs
 wget -O docker-compose.prod.yml https://raw.githubusercontent.com/HigeMaguro/kakeibo_VSCode/main/docker-compose.prod.yml
 wget -O update-nas.sh          https://raw.githubusercontent.com/HigeMaguro/kakeibo_VSCode/main/scripts/update-nas.sh
 chmod +x update-nas.sh
-
-# 旧構成 (ローカルビルド版) から移行する場合は旧コンテナを停止
-docker stop kakeibo 2>/dev/null; docker rm kakeibo 2>/dev/null
 
 # 起動 (data/ が無ければ空の DB が作られる。既存 data/ があればそのまま使われる)
 mkdir -p data backups

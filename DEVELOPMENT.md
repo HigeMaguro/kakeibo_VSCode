@@ -19,6 +19,7 @@ kakeibo_VSCode/
 ├── scripts/
 │   ├── make-report.js     既存 xlsx に集計/グラフを追加する CLI (npm run report)
 │   ├── update-nas.sh      NAS 上で実行する更新スクリプト (DB バックアップ → pull → 再起動)
+│   ├── migrate-nas.sh     旧 kakeibovs (NAS 上 build 方式) から DB を引き継いで切り替える (初回のみ)
 │   └── lib/               report-builder.js (集計・グラフシート), xlsx-charts.js (チャート XML 埋込)
 ├── app/                   フロントエンド (ビルド不要の素の HTML/CSS/JS)
 │   ├── index.html         PC 向け SPA (ダッシュボード/収支一覧/入力/予算/分析/口座/データ管理)
