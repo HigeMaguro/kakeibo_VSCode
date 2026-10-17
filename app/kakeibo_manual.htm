@@ -162,6 +162,18 @@
       .mockup-table th { background: var(--gray-50); font-weight: 700; font-size: 0.82rem; color: var(--text-muted); }
       .mockup-table .income { color: var(--income); font-weight: 700; }
       .mockup-table .expense { color: var(--expense); font-weight: 700; }
+      /* ===== Screenshot ===== */
+      .shot { margin: 28px 0; }
+      .shot img {
+        width: 100%; height: auto; display: block;
+        border: 1px solid var(--border); border-radius: 12px;
+        box-shadow: 0 6px 24px rgba(30, 41, 59, 0.10);
+      }
+      .shot.narrow { max-width: 420px; margin-left: auto; margin-right: auto; }
+      .shot figcaption {
+        font-size: 0.82rem; color: var(--text-muted);
+        margin-top: 10px; text-align: center;
+      }
 
       /* ===== Badge ===== */
       .badge {
@@ -215,7 +227,7 @@
     <header class="manual-header">
       <h1><i class="fas fa-book-open"></i> マイ家計簿 使い方マニュアル</h1>
       <p>毎日の家計管理をかんたんに — すべての機能の使い方を解説します</p>
-      <span class="ver">v3.0 / 2026年8月版</span>
+      <span class="ver">v4.0 / 2026年10月版・スクリーンショット付き</span>
     </header>
 
     <!-- ===== Back bar ===== -->
@@ -238,7 +250,8 @@
           <a class="toc-item" href="#accounts"><span class="toc-num">6</span>預金口座管理</a>
           <a class="toc-item" href="#link"><span class="toc-num">7</span>家計簿連携</a>
           <a class="toc-item" href="#mobile"><span class="toc-num">8</span>スマホ入力</a>
-          <a class="toc-item" href="#faq"><span class="toc-num">9</span>よくある質問</a>
+          <a class="toc-item" href="#datamanage"><span class="toc-num">9</span>データ管理</a>
+          <a class="toc-item" href="#faq"><span class="toc-num">10</span>よくある質問</a>
         </div>
       </nav>
     </div>
@@ -248,6 +261,10 @@
       <div class="container">
         <h2><span class="num">01</span> ダッシュボード</h2>
         <p class="section-lead">月別の収支状況をひと目で把握できるメイン画面です。</p>
+        <figure class="shot">
+          <img src="manual-images/dashboard.png" alt="ダッシュボード画面">
+          <figcaption>ダッシュボード: カテゴリ別支出・月別推移(6ヶ月)・最近の取引</figcaption>
+        </figure>
 
         <div class="card">
           <h3><i class="fas fa-chart-pie" style="color:var(--primary)"></i> カテゴリ別支出（円グラフ）</h3>
@@ -277,6 +294,10 @@
       <div class="container">
         <h2><span class="num">02</span> 収支一覧</h2>
         <p class="section-lead">取引の検索・確認と、開始残高の管理を行う画面です。</p>
+        <figure class="shot">
+          <img src="manual-images/transactions.png" alt="収支一覧画面">
+          <figcaption>収支一覧: 開始残高カード・検索/フィルタ・取引テーブル</figcaption>
+        </figure>
 
         <h3><i class="fas fa-table" style="color:var(--primary)"></i> 月次サマリーバー</h3>
         <p>全ページ共通でヘッダー直下に表示される4項目のサマリーです。</p>
@@ -342,6 +363,10 @@
           </tbody>
         </table>
         <p>各取引の「編集」ボタンで収支入力画面へ移動して編集、「削除」ボタンで確認モーダル表示後に削除できます。</p>
+        <figure class="shot">
+          <img src="manual-images/delete-modal.png" alt="削除確認モーダル">
+          <figcaption>削除ボタンを押すと確認モーダルが表示されます。「削除する」で実行</figcaption>
+        </figure>
       </div>
     </section>
 
@@ -350,6 +375,10 @@
       <div class="container">
         <h2><span class="num">03</span> 収支を入力</h2>
         <p class="section-lead">支出・収入の取引を登録・編集する画面です。</p>
+        <figure class="shot">
+          <img src="manual-images/input-form.png" alt="収支入力フォーム">
+          <figcaption>収支を入力: 支出/収入タブ・日付・金額・カテゴリ・メモを入力</figcaption>
+        </figure>
 
         <div class="steps">
           <div class="step-item">
@@ -383,6 +412,12 @@
           </div>
         </div>
 
+        
+        <figure class="shot">
+          <img src="manual-images/input-category-modal.png" alt="カテゴリ追加モーダル">
+          <figcaption>カテゴリ欄の「+」ボタンで新しいカテゴリを追加できます</figcaption>
+        </figure>
+
         <h3>デフォルトカテゴリ一覧</h3>
         <div class="card-grid">
           <div class="info-card">
@@ -404,6 +439,10 @@
       <div class="container">
         <h2><span class="num">04</span> 予算管理</h2>
         <p class="section-lead">カテゴリ別に月間予算を設定し、使用状況を進捗バーで確認します。</p>
+        <figure class="shot">
+          <img src="manual-images/budget.png" alt="予算管理画面">
+          <figcaption>予算管理: カテゴリ別の予算設定と使用率の進捗バー</figcaption>
+        </figure>
 
         <div class="steps">
           <div class="step-item">
@@ -444,6 +483,10 @@
       <div class="container">
         <h2><span class="num">05</span> 分析</h2>
         <p class="section-lead">3種類のグラフで家計の傾向を分析します。</p>
+        <figure class="shot">
+          <img src="manual-images/analysis.png" alt="分析画面">
+          <figcaption>分析: 月別収支比較・収入カテゴリ内訳・日別支出推移</figcaption>
+        </figure>
 
         <div class="card-grid">
           <div class="info-card">
@@ -470,6 +513,10 @@
       <div class="container">
         <h2><span class="num">06</span> 預金口座管理</h2>
         <p class="section-lead">銀行口座を登録し、入出金履歴を管理します。</p>
+        <figure class="shot">
+          <img src="manual-images/accounts.png" alt="預金口座管理画面">
+          <figcaption>預金口座: 合計残高サマリー・口座カード一覧・取引履歴</figcaption>
+        </figure>
 
         <h3><i class="fas fa-building-columns" style="color:var(--primary)"></i> 口座の登録・編集</h3>
         <div class="card">
@@ -501,6 +548,10 @@
         <h3><i class="fas fa-list-ul" style="color:var(--primary)"></i> 取引明細の追加</h3>
         <div class="card">
           <p>口座を選択後、「明細を追加」ボタンから取引を登録します。</p>
+        <figure class="shot">
+          <img src="manual-images/accounts-tx-form.png" alt="取引明細の追加フォーム">
+          <figcaption>明細追加フォーム: 日付・種別・金額・種類・摘要・家計簿連携を入力</figcaption>
+        </figure>
           <table class="mockup-table">
             <thead><tr><th>項目</th><th>説明</th></tr></thead>
             <tbody>
@@ -514,6 +565,10 @@
             </tbody>
           </table>
           <p>登録後、口座残高が自動計算され、残高欄に反映されます。</p>
+        <figure class="shot">
+          <img src="manual-images/accounts-tx.png" alt="取引明細テーブル">
+          <figcaption>取引履歴: 摘要欄のバッジで家計簿との連携状態が分かります</figcaption>
+        </figure>
         </div>
 
         <h3><i class="fas fa-right-left" style="color:var(--primary)"></i> 口座間振込</h3>
@@ -564,6 +619,12 @@
           </div>
         </div>
 
+        
+        <figure class="shot">
+          <img src="manual-images/link-form.png" alt="家計簿連携の選択">
+          <figcaption>明細追加フォームの「家計簿連携」で連携モードを選択（出金時のみ）</figcaption>
+        </figure>
+
         <h3><i class="fas fa-edit" style="color:var(--primary)"></i> 編集・削除時の動作</h3>
         <div class="card">
           <ul>
@@ -598,6 +659,12 @@
             <div class="callout-text">サイドバーの「スマホ入力」リンク、またはダッシュボードのバナーから別タブで開きます。スマホのブラウザでの利用を想定しています。</div>
           </div>
         </div>
+
+        
+        <figure class="shot narrow">
+          <img src="manual-images/mobile-input.png" alt="スマホ入力画面（支出タブ）">
+          <figcaption>スマホ入力: テンキーで金額を入力</figcaption>
+        </figure>
 
         <h3><i class="fas fa-tablet" style="color:var(--primary)"></i> 3つのタブ</h3>
         <div class="card-grid">
@@ -650,6 +717,12 @@
           </div>
         </div>
 
+        
+        <figure class="shot narrow">
+          <img src="manual-images/mobile-detail.png" alt="詳細入力パネル">
+          <figcaption>「次へ」で詳細パネルが開き、日付・カテゴリ・メモを入力します</figcaption>
+        </figure>
+
         <h3><i class="fas fa-building-columns" style="color:var(--primary)"></i> 口座タブの詳細</h3>
         <div class="card">
           <table class="mockup-table">
@@ -676,10 +749,44 @@
       </div>
     </section>
 
-    <!-- ===== 9. FAQ ===== -->
-    <section id="faq">
+    <!-- ===== 9. データ管理 ===== -->
+    <section id="datamanage">
       <div class="container">
-        <h2><span class="num">09</span> よくある質問</h2>
+        <h2><span class="num">09</span> データ管理</h2>
+        <p class="section-lead">Excel エクスポートと JSON バックアップ、バージョン確認を行う画面です。</p>
+
+        <figure class="shot">
+          <img src="manual-images/datamanage.png" alt="データ管理画面">
+          <figcaption>データ管理: Excel エクスポート・JSON バックアップ・バージョン情報</figcaption>
+        </figure>
+
+        <div class="card-grid">
+          <div class="info-card">
+            <div class="icon blue"><i class="fas fa-file-excel"></i></div>
+            <h3>Excel エクスポート</h3>
+            <p>選択中の月のデータを Excel (.xlsx) に出力します。月別サマリー・収支データ・予算・預金口座・口座明細・集計・グラフが含まれます。チェックボックスで全期間の一括出力も可能です。</p>
+          </div>
+          <div class="info-card">
+            <div class="icon orange"><i class="fas fa-download"></i></div>
+            <h3>JSON バックアップ</h3>
+            <p>全データを JSON 形式でダウンロードします。サーバー移行やデータ退避にご利用ください。</p>
+          </div>
+        </div>
+
+        <div class="callout info">
+          <div class="callout-icon">ℹ️</div>
+          <div class="callout-body">
+            <div class="callout-title">バージョン情報</div>
+            <div class="callout-text">画面下部の表にアプリバージョン・ビルド日時・Node.js のバージョンが表示されます。NAS 更新後にここが新版になっていれば更新完了です。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 10. FAQ ===== -->
+    <section id="faq" class="alt">
+      <div class="container">
+        <h2><span class="num">10</span> よくある質問</h2>
         <p class="section-lead">よく寄せられる質問をまとめました。</p>
 
         <div class="card">
