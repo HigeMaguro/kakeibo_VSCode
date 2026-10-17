@@ -1,0 +1,17 @@
+{
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "editor.tabSize": 2,
+  "eslint.useFlatConfig": true,
+  "eslint.validate": ["javascript"],
+  "editor.codeActionsOnSave": { "source.fixAll.eslint": "explicit" },
+  "files.exclude": {
+    "**/node_modules": true,
+    ".vscode/chrome-profile": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "data": true,
+    "backups": true
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      // サーバー側 (server.js / server/*.js) にブレークポイントを張れる
+      "name": "Node: server.js",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/server.js",
+      "cwd": "${workspaceFolder}",
+      "env": { "APP_PORT": "9090", "NODE_ENV": "development" },
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      // フロント側 (app/js/*.js) にブレークポイントを張れる。先に Node: server.js を起動しておく
+      "name": "Chrome: localhost:9090",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:9090",
+      "webRoot": "${workspaceFolder}/app",
+      "userDataDir": "${workspaceFolder}/.vscode/chrome-profile"
+    },
+    {
+      "name": "Chrome: スマホ入力画面",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:9090/mobile-input.html",
+      "webRoot": "${workspaceFolder}/app",
+      "userDataDir": "${workspaceFolder}/.vscode/chrome-profile"
+    },
+    {
+      "name": "Node: test",
+      "type": "node",
+      "request": "launch",
+      "runtimeArgs": ["--test", "test/*.test.js"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ],
+  "compounds": [
+    {
+      // F5 でサーバーとブラウザを同時起動 (フルスタックデバッグ)
+      "name": "Full Stack (server + Chrome)",
+      "configurations": ["Node: server.js", "Chrome: localhost:9090"],
+      "stopAll": true
+    }
+  ]
+}

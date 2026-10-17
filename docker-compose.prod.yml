@@ -1,0 +1,27 @@
+# NAS (本番) 用: GitHub Container Registry のイメージを pull して起動する。
+# NAS 上にはこのファイルと scripts/update-nas.sh だけ置けばよい (ソース・git・Node 不要)。
+#
+#   初回:   docker compose -f docker-compose.prod.yml up -d
+#   更新:   ./update-nas.sh            (= DB バックアップ → pull → up -d)
+#   戻す:   image: の :latest を :1.2.0 等の旧バージョンに書き換えて up -d
+#
+# data/ (SQLite) と backups/ はホスト側フォルダーにマウントされるため、
+# イメージを更新・再作成しても保持される。
+services:
+  kakeibo-app:
+    image: ghcr.io/higemaguro/kakeibo:latest
+    container_name: kakeibo
+    restart: unless-stopped
+    ports:
+      - "9090:80"          # http://<NAS の IP>:9090
+    volumes:
+      - ./data:/app/data           # 家計簿 DB (kakeibo.db)
+      - ./backups:/app/backups     # 更新前バックアップ
+    environment:
+      - TZ=Asia/Tokyo
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

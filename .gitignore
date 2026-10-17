@@ -1,0 +1,20 @@
+# 依存関係
+node_modules/
+
+# 家計簿データ (DB・バックアップはリポジトリに含めない。Docker ボリュームで保持)
+data/*
+!data/.gitkeep
+backups/*
+!backups/.gitkeep
+
+# ログ・一時ファイル
+*.log
+.DS_Store
+Thumbs.db
+
+# VS Code のデバッグ用 Chrome プロファイル
+.vscode/chrome-profile/
+
+# ローカル環境設定
+.env
+.env.local

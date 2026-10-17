@@ -1,0 +1,42 @@
+{
+  "name": "kakeibo-vscode",
+  "version": "1.2.0",
+  "description": "MyKakeibo - 自宅サーバー/NAS向け家計簿Webアプリケーション",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test \"test/*.test.js\"",
+    "lint": "eslint .",
+    "check": "npm run lint && npm test",
+    "report": "node scripts/make-report.js",
+    "docker": "docker compose up -d --build"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "exceljs": "^4.4.0",
+    "express": "^4.19.2",
+    "jszip": "^3.10.1"
+  },
+  "engines": {
+    "node": ">=22.5"
+  },
+  "keywords": [
+    "kakeibo",
+    "budget",
+    "finance",
+    "docker",
+    "nas",
+    "ugreen"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^10.8.1"
+  },
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HigeMaguro/kakeibo_VSCode.git"
+  }
+}

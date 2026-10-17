@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>家計簿 | MyKakeibo</title>
+  <link rel="stylesheet" href="css/style.css?v=2" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+  <!-- サイドバーナビゲーション -->
+  <nav id="sidebar">
+    <div class="sidebar-header">
+      <i class="fas fa-wallet sidebar-logo"></i>
+      <h1 class="sidebar-title">マイ家計簿</h1>
+      <button id="sidebar-toggle" aria-label="サイドバーを閉じる"><i class="fas fa-bars"></i></button>
+    </div>
+    <ul class="nav-list">
+      <li><a href="#" class="nav-link active" data-page="dashboard"><i
+            class="fas fa-chart-pie"></i><span>ダッシュボード</span></a></li>
+      <li><a href="#" class="nav-link" data-page="transactions"><i class="fas fa-list-ul"></i><span>収支一覧</span></a></li>
+      <li><a href="#" class="nav-link" data-page="input"><i class="fas fa-plus-circle"></i><span>収支を入力</span></a></li>
+      <li><a href="#" class="nav-link" data-page="budget"><i class="fas fa-bullseye"></i><span>予算管理</span></a></li>
+      <li><a href="#" class="nav-link" data-page="analysis"><i class="fas fa-chart-bar"></i><span>分析</span></a></li>
+      <li><a href="#" class="nav-link" data-page="accounts"><i class="fas fa-building-columns"></i><span>預金口座</span></a>
+      </li>
+      <li><a href="#" class="nav-link" data-page="datamanage"><i class="fas fa-file-export"></i><span>データ管理</span></a>
+      </li>
+      <li><a href="mobile-input.html" class="nav-link nav-link-mobile" target="_blank"><i
+            class="fas fa-mobile-screen"></i><span>スマホ入力</span><span class="nav-badge">NEW</span></a></li>
+      <li><a href="kakeibo_manual.htm" class="nav-link" target="_blank"><i class="fas fa-book"></i><span>マニュアル</span></a></li>
+    </ul>
+    <div class="sidebar-footer">
+      <span id="current-date-display"></span>
+    </div>
+  </nav>
+
+  <!-- メインコンテンツ -->
+  <main id="main-content">
+
+    <!-- ヘッダー -->
+    <header id="main-header">
+      <button id="hamburger-btn" aria-label="メニュー"><i class="fas fa-bars"></i></button>
+      <h2 id="page-title">ダッシュボード</h2>
+      <div class="header-actions">
+        <div class="month-selector">
+          <button id="prev-month" aria-label="前月"><i class="fas fa-chevron-left"></i></button>
+          <span id="current-month-label">2026年8月</span>
+          <button id="next-month" aria-label="翌月"><i class="fas fa-chevron-right"></i></button>
+        </div>
+        <a href="mobile-input.html" class="mobile-input-fab" title="スマホ入力画面を開く" target="_blank">
+          <i class="fas fa-mobile-screen"></i>
+        </a>
+      </div>
+    </header>
+
+    <!-- 共通月次サマリーバー（全ページ表示） -->
+    <div id="monthly-summary-bar" class="monthly-summary-bar">
+      <div class="msb-item">
+        <div class="msb-label"><i class="fas fa-wallet"></i> 開始残高</div>
+        <div class="msb-value" id="msb-opening">¥0</div>
+      </div>
+      <div class="msb-sep">+</div>
+      <div class="msb-item">
+        <div class="msb-label"><i class="fas fa-arrow-up"></i> 収入合計</div>
+        <div class="msb-value income" id="msb-income">¥0</div>
+      </div>
+      <div class="msb-sep">−</div>
+      <div class="msb-item">
+        <div class="msb-label"><i class="fas fa-arrow-down"></i> 支出合計</div>
+        <div class="msb-value expense" id="msb-expense">¥0</div>
+      </div>
+      <div class="msb-sep">=</div>
+      <div class="msb-item">
+        <div class="msb-label"><i class="fas fa-coins"></i> 現金残高</div>
+        <div class="msb-value" id="msb-balance">¥0</div>
+      </div>
+    </div>
+
+    <!-- ページコンテナ -->
+    <div id="pages-container">
+
+      <!-- ===== ダッシュボード ===== -->
+      <section id="page-dashboard" class="page active">
+
+        <!-- スマホ入力誘導バナー -->
+        <a href="mobile-input.html" class="mobile-banner" target="_blank">
+          <div class="mobile-banner-icon"><i class="fas fa-mobile-screen"></i></div>
+          <div class="mobile-banner-text">
+            <strong>📱 スマホから伝票を入力する</strong>
+            <span>テンキー式の専用入力画面を開きます</span>
+          </div>
+          <i class="fas fa-chevron-right mobile-banner-arrow"></i>
+        </a>
+
+        <div class="dashboard-grid">
+          <div class="card chart-card">
+            <div class="card-header">
+              <h3><i class="fas fa-chart-donut"></i> カテゴリ別支出</h3>
+            </div>
+            <div class="chart-container" style="height:300px;">
+              <canvas id="categoryChart"></canvas>
+            </div>
+            <p id="no-category-data" class="no-data-msg" style="display:none;">データがありません</p>
+          </div>
+          <div class="card chart-card">
+            <div class="card-header">
+              <h3><i class="fas fa-chart-line"></i> 月別推移 (6ヶ月)</h3>
+            </div>
+            <div class="chart-container" style="height:300px;">
+              <canvas id="trendChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3><i class="fas fa-clock"></i> 最近の取引</h3>
+            <a href="#" class="link-more" data-page="transactions">すべて見る →</a>
+          </div>
+          <div id="recent-transactions" class="transaction-list"></div>
+          <p id="no-recent-msg" class="no-data-msg" style="display:none;">まだ取引がありません</p>
+        </div>
+      </section>
+
+      <!-- ===== 収支一覧 ===== -->
+      <section id="page-transactions" class="page">
+        <!-- 開始残高編集カード（収支一覧専用） -->
+        <div class="card opening-cash-card">
+          <div class="opening-cash-row">
+            <div class="opening-cash-label">
+              <i class="fas fa-wallet"></i>
+              <span id="opening-cash-month-label"></span>の開始残高
+            </div>
+            <div class="opening-cash-input-wrap">
+              <input type="number" id="opening-cash-input" placeholder="0" min="0" />
+              <span class="opening-cash-suffix">円</span>
+            </div>
+            <button class="btn btn-primary btn-sm" id="opening-cash-save-btn"><i class="fas fa-save"></i> 保存</button>
+            <button class="btn btn-secondary btn-sm" id="opening-cash-edit-btn" style="display:none;"><i class="fas fa-pen"></i> 修正</button>
+          </div>
+          <div class="opening-cash-note" id="opening-cash-note"></div>
+        </div>
+
+        <div class="toolbar">
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="search-input" placeholder="キーワードで検索..." />
+          </div>
+          <div class="filter-group">
+            <select id="filter-type">
+              <option value="">すべて</option>
+              <option value="income">収入のみ</option>
+              <option value="expense">支出のみ</option>
+            </select>
+            <select id="filter-category">
+              <option value="">カテゴリ：すべて</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" id="add-from-list-btn"><i class="fas fa-plus"></i> 追加</button>
+        </div>
+
+        <div class="card">
+          <table id="transaction-table" class="data-table">
+            <thead>
+              <tr>
+                <th>日付</th>
+                <th>種別</th>
+                <th>カテゴリ</th>
+                <th>メモ</th>
+                <th class="text-right">金額</th>
+                <th class="text-center">操作</th>
+              </tr>
+            </thead>
+            <tbody id="transaction-tbody"></tbody>
+          </table>
+          <p id="no-transaction-msg" class="no-data-msg" style="display:none;">条件に一致する取引はありません</p>
+          <div id="pagination" class="pagination"></div>
+        </div>
+      </section>
+
+      <!-- ===== 収支入力 ===== -->
+      <section id="page-input" class="page">
+        <div class="card form-card">
+          <div class="type-tabs">
+            <button class="type-tab active" data-type="expense"><i class="fas fa-arrow-down"></i> 支出</button>
+            <button class="type-tab" data-type="income"><i class="fas fa-arrow-up"></i> 収入</button>
+          </div>
+          <form id="transaction-form">
+            <input type="hidden" id="edit-id" />
+            <div class="form-row">
+              <div class="form-group">
+                <label for="input-date"><i class="fas fa-calendar"></i> 日付</label>
+                <input type="date" id="input-date" required />
+              </div>
+              <div class="form-group">
+                <label for="input-amount"><i class="fas fa-yen-sign"></i> 金額</label>
+                <input type="number" id="input-amount" placeholder="0" min="0" required />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="input-category"><i class="fas fa-tag"></i> カテゴリ</label>
+                <div class="category-selector">
+                  <select id="input-category" required></select>
+                  <button type="button" id="add-category-btn" title="カテゴリを追加"><i class="fas fa-plus"></i></button>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="input-memo"><i class="fas fa-sticky-note"></i> メモ (任意)</label>
+              <input type="text" id="input-memo" placeholder="メモを入力..." maxlength="100" />
+            </div>
+            <div class="form-actions">
+              <button type="button" id="form-cancel-btn" class="btn btn-secondary" style="display:none;"><i
+                  class="fas fa-times"></i> キャンセル</button>
+              <button type="submit" class="btn btn-primary btn-lg" id="form-submit-btn"><i class="fas fa-check"></i>
+                登録する</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- カテゴリ追加モーダル -->
+        <div id="category-modal" class="modal-overlay" style="display:none;">
+          <div class="modal">
+            <h3>カテゴリを追加</h3>
+            <input type="text" id="new-category-input" placeholder="カテゴリ名を入力" maxlength="20" />
+            <div class="modal-actions">
+              <button id="category-modal-cancel" class="btn btn-secondary">キャンセル</button>
+              <button id="category-modal-add" class="btn btn-primary">追加</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 予算管理 ===== -->
+      <section id="page-budget" class="page">
+        <div class="card form-card">
+          <div class="card-header">
+            <h3><i class="fas fa-plus-circle"></i> 予算を設定</h3>
+          </div>
+          <form id="budget-form">
+            <input type="hidden" id="budget-edit-id" />
+            <div class="form-row">
+              <div class="form-group">
+                <label for="budget-category"><i class="fas fa-tag"></i> カテゴリ</label>
+                <select id="budget-category" required></select>
+              </div>
+              <div class="form-group">
+                <label for="budget-amount"><i class="fas fa-yen-sign"></i> 予算額</label>
+                <input type="number" id="budget-amount" placeholder="0" min="0" required />
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="button" id="budget-cancel-btn" class="btn btn-secondary" style="display:none;"><i
+                  class="fas fa-times"></i> キャンセル</button>
+              <button type="submit" class="btn btn-primary" id="budget-submit-btn"><i class="fas fa-check"></i>
+                設定する</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3><i class="fas fa-tasks"></i> <span id="budget-list-title">今月の予算状況</span></h3>
+            <button type="button" id="budget-copy-prev-btn" class="btn btn-secondary" style="display:none;">
+              <i class="fas fa-copy"></i> 前月の予算をコピー</button>
+          </div>
+          <div id="budget-list"></div>
+          <p id="no-budget-msg" class="no-data-msg" style="display:none;">予算が設定されていません</p>
+        </div>
+      </section>
+
+      <!-- ===== 分析 ===== -->
+      <section id="page-analysis" class="page">
+        <div class="analysis-grid">
+          <div class="card chart-card">
+            <div class="card-header">
+              <h3><i class="fas fa-chart-bar"></i> 月別収支比較</h3>
+            </div>
+            <div class="chart-container" style="height:320px;">
+              <canvas id="monthlyBarChart"></canvas>
+            </div>
+          </div>
+          <div class="card chart-card">
+            <div class="card-header">
+              <h3><i class="fas fa-chart-pie"></i> 収入カテゴリ内訳</h3>
+            </div>
+            <div class="chart-container" style="height:320px;">
+              <canvas id="incomePieChart"></canvas>
+            </div>
+            <p id="no-income-pie-msg" class="no-data-msg" style="display:none;">データがありません</p>
+          </div>
+        </div>
+        <div class="card chart-card" style="margin-top:1.5rem;">
+          <div class="card-header">
+            <h3><i class="fas fa-calendar-alt"></i> 日別支出推移</h3>
+          </div>
+          <div class="chart-container" style="height:280px;">
+            <canvas id="dailyLineChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 預金口座管理 ===== -->
+      <section id="page-accounts" class="page">
+
+        <!-- 口座サマリー -->
+        <div id="accounts-summary-cards" class="acct-summary-row"></div>
+
+        <!-- 上段：口座一覧 + 口座追加フォーム -->
+        <div class="acct-top-grid">
+
+          <!-- 口座カード一覧 -->
+          <div class="acct-cards-area">
+            <div class="card">
+              <div class="card-header">
+                <h3><i class="fas fa-credit-card"></i> 登録口座</h3>
+                <div style="display:flex;gap:6px;">
+                  <button class="btn btn-secondary btn-sm" id="acct-recalc-btn" title="初期残高と取引明細から全口座の残高を再計算します">
+                    <i class="fas fa-calculator"></i> 残高再計算
+                  </button>
+                  <button class="btn btn-primary btn-sm" id="show-add-acct-btn">
+                    <i class="fas fa-plus"></i> 口座を追加
+                  </button>
+                </div>
+              </div>
+              <div id="account-cards-list" class="account-cards-list"></div>
+              <p id="no-accounts-msg" class="no-data-msg" style="display:none;">
+                <i class="fas fa-building-columns"></i><br>口座がまだ登録されていません
+              </p>
+            </div>
+          </div>
+
+          <!-- 口座追加/編集フォーム -->
+          <div class="card acct-form-card" id="acct-form-card" style="display:none;">
+            <div class="card-header">
+              <h3 id="acct-form-title"><i class="fas fa-plus-circle"></i> 口座を追加</h3>
+              <button class="btn-icon" id="acct-form-close-btn" title="閉じる"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="account-form">
+              <input type="hidden" id="acct-edit-id" />
+              <div class="form-group">
+                <label><i class="fas fa-building-columns"></i> 銀行名</label>
+                <input type="text" id="acct-bank" placeholder="例：三菱UFJ銀行" required maxlength="30" />
+              </div>
+              <div class="form-group">
+                <label><i class="fas fa-tag"></i> 口座名称</label>
+                <input type="text" id="acct-name" placeholder="例：給与口座・生活費口座" required maxlength="30" />
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label><i class="fas fa-layer-group"></i> 種別</label>
+                  <select id="acct-type">
+                    <option value="普通">普通預金</option>
+                    <option value="当座">当座預金</option>
+                    <option value="定期">定期預金</option>
+                    <option value="貯蓄">貯蓄預金</option>
+                    <option value="証券">証券口座</option>
+                    <option value="生活日">生活日口座</option>
+                    <option value="その他">その他</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label><i class="fas fa-palette"></i> カラー</label>
+                  <div class="color-picker-row" id="color-picker-row"></div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label><i class="fas fa-yen-sign"></i> 初期残高</label>
+                <input type="number" id="acct-initial" placeholder="0" min="0" />
+              </div>
+              <div class="form-group">
+                <label><i class="fas fa-sticky-note"></i> メモ（任意）</label>
+                <input type="text" id="acct-note" placeholder="メモを入力" maxlength="50" />
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="acct-cancel-btn"><i class="fas fa-times"></i>
+                  キャンセル</button>
+                <button type="submit" class="btn btn-primary" id="acct-submit-btn"><i class="fas fa-check"></i>
+                  登録する</button>
+              </div>
+            </form>
+          </div>
+
+        </div><!-- /acct-top-grid -->
+
+        <!-- 取引履歴エリア -->
+        <div class="card" id="acct-tx-area">
+          <div class="card-header">
+            <h3 id="acct-tx-title"><i class="fas fa-list-ul"></i> 取引履歴</h3>
+            <div class="acct-tx-header-actions">
+              <select id="acct-tx-filter-type" class="acct-filter-sel">
+                <option value="">すべて</option>
+                <option value="deposit">入金</option>
+                <option value="withdrawal">出金</option>
+                <option value="transfer_in">振込（入）</option>
+                <option value="transfer_out">振込（出）</option>
+              </select>
+              <button class="btn btn-primary btn-sm" id="add-acct-tx-btn" disabled>
+                <i class="fas fa-plus"></i> 明細を追加
+              </button>
+            </div>
+          </div>
+
+          <!-- 取引追加/編集フォーム（インライン） -->
+          <div id="acct-tx-form-wrap" class="acct-tx-form-wrap" style="display:none;">
+            <form id="acct-tx-form" class="acct-tx-form">
+              <input type="hidden" id="acct-tx-edit-id" />
+              <div class="acct-tx-form-grid">
+                <div class="form-group">
+                  <label><i class="fas fa-calendar"></i> 日付</label>
+                  <input type="date" id="acct-tx-date" required />
+                </div>
+                <div class="form-group">
+                  <label><i class="fas fa-right-left"></i> 種別</label>
+                  <select id="acct-tx-type" required>
+                    <option value="withdrawal">出金</option>
+                    <option value="deposit">入金</option>
+                    <option value="transfer_out">振込（出）</option>
+                    <option value="transfer_in">振込（入）</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label><i class="fas fa-yen-sign"></i> 金額</label>
+                  <input type="number" id="acct-tx-amount" placeholder="0" min="1" required />
+                </div>
+                <div class="form-group">
+                  <label><i class="fas fa-tag"></i> 種類</label>
+                  <input type="text" id="acct-tx-category" placeholder="給与・ATM・食費..." list="acct-tx-cat-list"
+                    maxlength="20" />
+                  <datalist id="acct-tx-cat-list">
+                    <option value="給与">
+                    <option value="ATM出金">
+                    <option value="ATM入金">
+                    <option value="振込">
+                    <option value="公共料金">
+                    <option value="カード引落">
+                    <option value="利息">
+                    <option value="その他">
+                    <option value="食費">
+                    <option value="交通費">
+                    <option value="光熱費">
+                    <option value="通信費">
+                    <option value="日用品">
+                    <option value="医療費">
+                    <option value="娯楽">
+                    <option value="衣服">
+                    <option value="外食">
+                    <option value="教育">
+                    <option value="保険">
+                    <option value="住居">
+                  </datalist>
+                </div>
+                <div class="form-group acct-tx-desc-group">
+                  <label><i class="fas fa-pen"></i> 摘要</label>
+                  <input type="text" id="acct-tx-desc" placeholder="摘要・メモ" maxlength="50" />
+                  <div class="acct-tx-link-select-wrap" id="acct-tx-link-kakeibo-wrap">
+                    <label><i class="fas fa-link"></i> 家計簿連携</label>
+                    <select id="acct-tx-link-mode">
+                      <option value="0">連携なし</option>
+                      <option value="1">家計簿の収入へ連携</option>
+                      <option value="2">家計簿の入出金へ連携</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group" id="acct-tx-related-group" style="display:none;">
+                  <label><i class="fas fa-arrow-right-arrow-left"></i> 相手口座</label>
+                  <select id="acct-tx-related">
+                    <option value="">選択...</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="acct-tx-cancel-btn"><i class="fas fa-times"></i>
+                  キャンセル</button>
+                <button type="submit" class="btn btn-primary" id="acct-tx-submit-btn"><i class="fas fa-check"></i>
+                  登録する</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- 取引テーブル -->
+          <div class="acct-tx-table-wrap">
+            <table class="data-table acct-tx-table">
+              <thead>
+                <tr>
+                  <th>日付</th>
+                  <th>種別</th>
+                  <th>種類</th>
+                  <th>摘要</th>
+                  <th class="text-right">出金</th>
+                  <th class="text-right">入金</th>
+                  <th class="text-right">残高</th>
+                  <th class="text-center">操作</th>
+                </tr>
+              </thead>
+              <tbody id="acct-tx-tbody"></tbody>
+            </table>
+            <p id="no-acct-tx-msg" class="no-data-msg" style="display:none;">明細がありません</p>
+            <div id="acct-tx-pagination" class="pagination"></div>
+          </div>
+        </div><!-- /acct-tx-area -->
+
+      </section><!-- /page-accounts -->
+
+      <!-- ===== データ管理 ===== -->
+      <section id="page-datamanage" class="page">
+
+        <div class="dashboard-grid">
+          <div class="card">
+            <div class="card-header">
+              <h3><i class="fas fa-file-excel"></i> Excel エクスポート</h3>
+            </div>
+            <p id="excel-export-desc" style="margin:0 0 8px;color:var(--text-secondary, #666);">
+              選択中の月のデータを Excel (.xlsx) ファイルに出力します。<br>
+              月別サマリー・収支データ・予算・預金口座・口座明細・集計・グラフが含まれます。
+            </p>
+            <label style="display:flex;align-items:center;gap:8px;margin:0 0 16px;font-size:13px;color:var(--text-secondary, #666);cursor:pointer;">
+              <input type="checkbox" id="export-all-period" style="width:16px;height:16px;cursor:pointer;" />
+              全期間を含める (チェック時は選択月ではなく全データを出力)
+            </label>
+            <button class="btn btn-primary" id="excel-export-btn">
+              <i class="fas fa-download"></i> Excel ファイルをダウンロード
+            </button>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h3><i class="fas fa-download"></i> JSON バックアップ</h3>
+            </div>
+            <p style="margin:0 0 16px;color:var(--text-secondary, #666);">
+              全データを JSON 形式でバックアップします。<br>
+              サーバー移行やデータ退避にご利用ください。
+            </p>
+            <button class="btn btn-secondary" id="json-export-btn">
+              <i class="fas fa-file-arrow-down"></i> JSON バックアップをダウンロード
+            </button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:16px;">
+          <div class="card-header">
+            <h3><i class="fas fa-circle-info"></i> バージョン情報</h3>
+          </div>
+          <table class="data-table" id="version-table">
+            <tbody>
+              <tr><td>アプリバージョン</td><td id="version-value">-</td></tr>
+              <tr><td>ビルド日時</td><td id="version-build-date">-</td></tr>
+              <tr><td>Node.js</td><td id="version-node">-</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </section><!-- /page-datamanage -->
+
+    </div><!-- /pages-container -->
+  </main>
+
+  <!-- 削除確認モーダル -->
+  <div id="delete-modal" class="modal-overlay" style="display:none;">
+    <div class="modal">
+      <div class="modal-icon danger"><i class="fas fa-exclamation-triangle"></i></div>
+      <h3>削除の確認</h3>
+      <p>この取引を削除しますか？<br>この操作は元に戻せません。</p>
+      <div class="modal-actions">
+        <button id="delete-cancel-btn" class="btn btn-secondary">キャンセル</button>
+        <button id="delete-confirm-btn" class="btn btn-danger">削除する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- トースト通知 -->
+  <div id="toast-container"></div>
+
+  <script src="js/common.js"></script>
+  <script src="js/accounts.js"></script>
+  <script src="js/app.js"></script>
+</body>
+
+</html>

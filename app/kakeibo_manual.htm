@@ -1,0 +1,719 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>マイ家計簿 使い方マニュアル</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" />
+    <style>
+      :root {
+        --primary: #4f7df3;
+        --primary-dark: #3a63d4;
+        --income: #22c55e;
+        --income-dark: #15803d;
+        --income-light: #dcfce7;
+        --expense: #ef4444;
+        --expense-light: #fee2e2;
+        --warning: #f59e0b;
+        --warning-light: #fef3c7;
+        --text: #1e293b;
+        --text-muted: #64748b;
+        --border: #e2e8f0;
+        --bg: #f0f4ff;
+        --surface: #ffffff;
+        --gray-50: #f8fafc;
+        --gray-100: #f1f5f9;
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0; padding: 0;
+        font-family: 'Noto Sans JP', sans-serif;
+        color: var(--text); background: var(--bg);
+        line-height: 1.8;
+      }
+      .container { max-width: 900px; margin: 0 auto; padding: 0 24px; }
+
+      /* ===== Header ===== */
+      .manual-header {
+        background: linear-gradient(135deg, var(--primary) 0%, #6b8af5 100%);
+        color: #fff; padding: 60px 24px 48px; text-align: center;
+      }
+      .manual-header h1 { font-size: 2rem; margin: 0 0 8px; font-weight: 800; }
+      .manual-header p { margin: 0; opacity: 0.9; font-size: 1.05rem; }
+      .manual-header .ver { display: inline-block; margin-top: 12px; background: rgba(255,255,255,0.2); padding: 4px 14px; border-radius: 999px; font-size: 0.85rem; }
+
+      /* ===== Back button ===== */
+      .back-bar {
+        background: var(--surface); border-bottom: 1px solid var(--border);
+        padding: 12px 24px; position: sticky; top: 0; z-index: 10;
+      }
+      .back-bar a {
+        display: inline-flex; align-items: center; gap: 8px;
+        color: var(--primary); text-decoration: none; font-weight: 600; font-size: 0.95rem;
+      }
+      .back-bar a:hover { color: var(--primary-dark); }
+
+      /* ===== TOC ===== */
+      .toc {
+        background: var(--surface); border-radius: 16px; padding: 28px 32px;
+        margin: -32px auto 0; max-width: 852px; box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        border: 1px solid var(--border);
+      }
+      .toc h2 { font-size: 1.15rem; margin: 0 0 16px; }
+      .toc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+      .toc-item {
+        display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+        background: var(--gray-50); border-radius: 10px; text-decoration: none;
+        color: var(--text); font-weight: 600; font-size: 0.9rem; border: 1px solid transparent;
+        transition: border-color 0.15s;
+      }
+      .toc-item:hover { border-color: var(--primary); }
+      .toc-num {
+        width: 26px; height: 26px; border-radius: 50%; background: var(--primary);
+        color: #fff; display: flex; align-items: center; justify-content: center;
+        font-size: 0.8rem; font-weight: 700; flex-shrink: 0;
+      }
+
+      /* ===== Sections ===== */
+      section { padding: 56px 0; }
+      section.alt { background: var(--surface); }
+      h2 {
+        font-size: 1.6rem; margin: 0 0 6px; font-weight: 800;
+        display: flex; align-items: center; gap: 10px;
+      }
+      h2 .num {
+        background: var(--primary); color: #fff; font-size: 0.8rem;
+        padding: 4px 10px; border-radius: 999px; font-weight: 700; letter-spacing: 0.05em;
+      }
+      h3 { font-size: 1.15rem; margin: 24px 0 10px; font-weight: 700; }
+      .section-lead { color: var(--text-muted); margin: 0 0 28px; font-size: 1rem; }
+      p { margin: 8px 0; }
+
+      /* ===== Cards ===== */
+      .card {
+        background: var(--surface); border-radius: 14px; padding: 24px 28px;
+        border: 1px solid var(--border); margin-bottom: 16px;
+      }
+      .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+      .info-card {
+        background: var(--surface); border-radius: 14px; padding: 24px;
+        border: 1px solid var(--border);
+      }
+      .info-card .icon {
+        width: 48px; height: 48px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 20px; margin-bottom: 14px;
+      }
+      .info-card .icon.blue { background: #dbeafe; color: #2563eb; }
+      .info-card .icon.green { background: var(--income-light); color: var(--income-dark); }
+      .info-card .icon.red { background: var(--expense-light); color: var(--expense); }
+      .info-card .icon.orange { background: var(--warning-light); color: var(--warning); }
+      .info-card .icon.purple { background: #f3e8ff; color: #7c3aed; }
+      .info-card h3 { margin: 0 0 8px; }
+      .info-card p { margin: 0; color: var(--text-muted); font-size: 0.92rem; }
+
+      /* ===== Steps ===== */
+      .steps { display: grid; gap: 16px; }
+      .step-item {
+        display: flex; gap: 16px; align-items: flex-start;
+        background: var(--surface); border-radius: 12px; padding: 20px 24px;
+        border: 1px solid var(--border);
+      }
+      .step-num {
+        width: 32px; height: 32px; border-radius: 50%; background: var(--primary);
+        color: #fff; display: flex; align-items: center; justify-content: center;
+        font-weight: 700; flex-shrink: 0;
+      }
+      .step-body h4 { margin: 0 0 6px; font-size: 1.05rem; }
+      .step-body p { margin: 0; color: var(--text-muted); font-size: 0.92rem; }
+
+      /* ===== Callout ===== */
+      .callout {
+        display: flex; gap: 14px; padding: 18px 22px; border-radius: 12px; margin: 20px 0;
+        align-items: flex-start;
+      }
+      .callout.info { background: #dbeafe; border-left: 4px solid #2563eb; }
+      .callout.tip { background: var(--warning-light); border-left: 4px solid var(--warning); }
+      .callout.warn { background: var(--expense-light); border-left: 4px solid var(--expense); }
+      .callout-icon { font-size: 20px; flex-shrink: 0; }
+      .callout-body { flex: 1; }
+      .callout-title { font-weight: 700; margin-bottom: 2px; }
+      .callout-text { font-size: 0.92rem; color: var(--text); }
+
+      /* ===== Summary bar mockup ===== */
+      .mockup-bar {
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        padding: 12px 20px; background: var(--surface); border: 1px solid var(--border);
+        border-radius: 10px; margin: 16px 0; flex-wrap: wrap;
+      }
+      .mockup-bar .msb-item { text-align: center; min-width: 90px; }
+      .mockup-bar .msb-label { font-size: 11px; color: var(--text-muted); }
+      .mockup-bar .msb-value { font-size: 15px; font-weight: 700; }
+      .mockup-bar .msb-value.income { color: var(--income); }
+      .mockup-bar .msb-value.expense { color: var(--expense); }
+      .mockup-bar .msb-sep { font-weight: 700; color: var(--text-muted); }
+
+      /* ===== Table mockup ===== */
+      .mockup-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.88rem; }
+      .mockup-table th, .mockup-table td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+      .mockup-table th { background: var(--gray-50); font-weight: 700; font-size: 0.82rem; color: var(--text-muted); }
+      .mockup-table .income { color: var(--income); font-weight: 700; }
+      .mockup-table .expense { color: var(--expense); font-weight: 700; }
+
+      /* ===== Badge ===== */
+      .badge {
+        display: inline-block; padding: 3px 10px; border-radius: 999px;
+        font-size: 0.78rem; font-weight: 700;
+      }
+      .badge.green { background: var(--income-light); color: var(--income-dark); }
+      .badge.blue { background: #dbeafe; color: #2563eb; }
+      .badge.red { background: var(--expense-light); color: var(--expense); }
+      .badge.orange { background: var(--warning-light); color: var(--warning); }
+      .badge.purple { background: #f3e8ff; color: #7c3aed; }
+
+      /* ===== Link mode ===== */
+      .link-mode-list { display: grid; gap: 12px; margin: 16px 0; }
+      .link-mode-item {
+        display: flex; gap: 14px; align-items: flex-start; padding: 16px 20px;
+        background: var(--surface); border-radius: 10px; border: 1px solid var(--border);
+      }
+      .link-mode-item .lm-num {
+        width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff;
+      }
+      .link-mode-item .lm-num.n0 { background: var(--text-muted); }
+      .link-mode-item .lm-num.n1 { background: var(--income); }
+      .link-mode-item .lm-num.n2 { background: var(--primary); }
+      .link-mode-item h4 { margin: 0 0 4px; font-size: 1rem; }
+      .link-mode-item p { margin: 0; font-size: 0.88rem; color: var(--text-muted); }
+
+      /* ===== Footer ===== */
+      footer {
+        background: var(--text); color: #cbd5e1; padding: 40px 24px; text-align: center;
+      }
+      footer a { color: #93c5fd; text-decoration: none; }
+      footer a:hover { text-decoration: underline; }
+
+      /* ===== Responsive ===== */
+      @media (max-width: 768px) {
+        .manual-header { padding: 40px 20px 36px; }
+        .manual-header h1 { font-size: 1.5rem; }
+        section { padding: 40px 0; }
+        .toc { padding: 20px; margin-top: -24px; }
+        .step-item { flex-direction: column; gap: 8px; }
+        .mockup-bar { gap: 4px; }
+        .mockup-bar .msb-item { min-width: 70px; }
+      }
+    </style>
+  </head>
+  <body>
+
+    <!-- ===== Header ===== -->
+    <header class="manual-header">
+      <h1><i class="fas fa-book-open"></i> マイ家計簿 使い方マニュアル</h1>
+      <p>毎日の家計管理をかんたんに — すべての機能の使い方を解説します</p>
+      <span class="ver">v3.0 / 2026年8月版</span>
+    </header>
+
+    <!-- ===== Back bar ===== -->
+    <div class="back-bar">
+      <div class="container">
+        <a href="index.html"><i class="fas fa-chevron-left"></i> アプリに戻る</a>
+      </div>
+    </div>
+
+    <!-- ===== TOC ===== -->
+    <div class="container">
+      <nav class="toc" id="top">
+        <h2><i class="fas fa-list"></i> 目次</h2>
+        <div class="toc-grid">
+          <a class="toc-item" href="#dashboard"><span class="toc-num">1</span>ダッシュボード</a>
+          <a class="toc-item" href="#transactions"><span class="toc-num">2</span>収支一覧</a>
+          <a class="toc-item" href="#input"><span class="toc-num">3</span>収支を入力</a>
+          <a class="toc-item" href="#budget"><span class="toc-num">4</span>予算管理</a>
+          <a class="toc-item" href="#analysis"><span class="toc-num">5</span>分析</a>
+          <a class="toc-item" href="#accounts"><span class="toc-num">6</span>預金口座管理</a>
+          <a class="toc-item" href="#link"><span class="toc-num">7</span>家計簿連携</a>
+          <a class="toc-item" href="#mobile"><span class="toc-num">8</span>スマホ入力</a>
+          <a class="toc-item" href="#faq"><span class="toc-num">9</span>よくある質問</a>
+        </div>
+      </nav>
+    </div>
+
+    <!-- ===== 1. ダッシュボード ===== -->
+    <section id="dashboard">
+      <div class="container">
+        <h2><span class="num">01</span> ダッシュボード</h2>
+        <p class="section-lead">月別の収支状況をひと目で把握できるメイン画面です。</p>
+
+        <div class="card">
+          <h3><i class="fas fa-chart-pie" style="color:var(--primary)"></i> カテゴリ別支出（円グラフ）</h3>
+          <p>選択中の月における支出カテゴリの構成比をドーナツグラフで表示します。カテゴリにマウスを乗せると金額と比率が表示されます。</p>
+        </div>
+        <div class="card">
+          <h3><i class="fas fa-chart-line" style="color:var(--primary)"></i> 月別推移（6ヶ月）</h3>
+          <p>過去6ヶ月の収入・支出の推移を折れ線グラフで表示します。トレンドを視覚的に把握できます。</p>
+        </div>
+        <div class="card">
+          <h3><i class="fas fa-clock" style="color:var(--primary)"></i> 最近の取引</h3>
+          <p>選択中の月の最新7件の取引を一覧表示します。「すべて見る」をクリックすると収支一覧ページへ移動します。</p>
+        </div>
+
+        <div class="callout info">
+          <div class="callout-icon">ℹ️</div>
+          <div class="callout-body">
+            <div class="callout-title">月切替について</div>
+            <div class="callout-text">ヘッダーの「‹ 2026年8月 ›」ボタンで対象月を切り替えられます。全ページで共通の月が適用されます。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 2. 収支一覧 ===== -->
+    <section id="transactions" class="alt">
+      <div class="container">
+        <h2><span class="num">02</span> 収支一覧</h2>
+        <p class="section-lead">取引の検索・確認と、開始残高の管理を行う画面です。</p>
+
+        <h3><i class="fas fa-table" style="color:var(--primary)"></i> 月次サマリーバー</h3>
+        <p>全ページ共通でヘッダー直下に表示される4項目のサマリーです。</p>
+        <div class="mockup-bar">
+          <div class="msb-item"><div class="msb-label">開始残高</div><div class="msb-value">¥100,000</div></div>
+          <div class="msb-sep">+</div>
+          <div class="msb-item"><div class="msb-label">収入合計</div><div class="msb-value income">+¥50,000</div></div>
+          <div class="msb-sep">−</div>
+          <div class="msb-item"><div class="msb-label">支出合計</div><div class="msb-value expense">−¥30,000</div></div>
+          <div class="msb-sep">=</div>
+          <div class="msb-item"><div class="msb-label">現金残高</div><div class="msb-value">¥120,000</div></div>
+        </div>
+        <ul>
+          <li><strong>開始残高</strong>: 月初の現金残高。未保存時は前月からの繰越を自動計算</li>
+          <li><strong>収入合計</strong>: 当月の収入总额</li>
+          <li><strong>支出合計</strong>: 当月の支出总额</li>
+          <li><strong>現金残高</strong>: 開始残高 + 収入 − 支出（リアルタイム更新）</li>
+        </ul>
+
+        <h3><i class="fas fa-wallet" style="color:var(--income)"></i> 開始残高の編集</h3>
+        <p>収支一覧ページの最上部にある開始残高カードで編集できます。</p>
+        <div class="card">
+          <div class="steps">
+            <div class="step-item">
+              <div class="step-num">1</div>
+              <div class="step-body">
+                <h4>未保存時: 前月繰越を自動表示</h4>
+                <p>前月の「開始残高 + 収入 − 支出」が自動入力されます。保存ボタンが活性状態で、そのまま保存または数値を編集して保存できます。</p>
+              </div>
+            </div>
+            <div class="step-item">
+              <div class="step-num">2</div>
+              <div class="step-body">
+                <h4>保存済み時: 確定値を表示</h4>
+                <p>入力欄が読み取り専用になり、「修正」ボタンが表示されます。修正ボタンを押すと編集可能になります。</p>
+              </div>
+            </div>
+            <div class="step-item">
+              <div class="step-num">3</div>
+              <div class="step-body">
+                <h4>保存ボタンで確定</h4>
+                <p>保存するとサーバーに記録され、サマリーバーの開始残高・現金残高が即座に更新されます。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3><i class="fas fa-search" style="color:var(--primary)"></i> 検索・フィルタ</h3>
+        <div class="card">
+          <ul>
+            <li><strong>キーワード検索</strong>: カテゴリ名・メモから部分一致で検索</li>
+            <li><strong>種別フィルタ</strong>: すべて / 収入のみ / 支出のみ</li>
+            <li><strong>カテゴリフィルタ</strong>: 当月の取引に含まれるカテゴリから選択</li>
+          </ul>
+        </div>
+
+        <h3><i class="fas fa-list" style="color:var(--primary)"></i> 取引テーブル</h3>
+        <table class="mockup-table">
+          <thead><tr><th>日付</th><th>種別</th><th>カテゴリ</th><th>メモ</th><th>金額</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr><td>2026/08/15</td><td><span class="badge red">支出</span></td><td>🍚 食費</td><td>スーパー</td><td class="expense">−¥3,450</td><td>編集 / 削除</td></tr>
+            <tr><td>2026/08/10</td><td><span class="badge green">収入</span></td><td>💼 給与</td><td>8月分</td><td class="income">+¥240,000</td><td>編集 / 削除</td></tr>
+          </tbody>
+        </table>
+        <p>各取引の「編集」ボタンで収支入力画面へ移動して編集、「削除」ボタンで確認モーダル表示後に削除できます。</p>
+      </div>
+    </section>
+
+    <!-- ===== 3. 収支を入力 ===== -->
+    <section id="input">
+      <div class="container">
+        <h2><span class="num">03</span> 収支を入力</h2>
+        <p class="section-lead">支出・収入の取引を登録・編集する画面です。</p>
+
+        <div class="steps">
+          <div class="step-item">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <h4>支出 / 収入タブを選択</h4>
+              <p>画面上部のタブで切り替えます。カテゴリ一覧が対応するものに切り替わります。</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <h4>日付・金額・カテゴリ・メモを入力</h4>
+              <p>日付は初期値で今日の日付が入力済み。金額は0より大きい値を入力。カテゴリはプルダウンから選択。メモは任意入力（100文字まで）。</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <h4>「登録する」ボタンで保存</h4>
+              <p>入力内容がサーバーに保存され、サマリーバー・ダッシュボードが即座に更新されます。</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout tip">
+          <div class="callout-icon">💡</div>
+          <div class="callout-body">
+            <div class="callout-title">カテゴリの追加</div>
+            <div class="callout-text">カテゴリ欄右の「+」ボタンから新しいカテゴリを追加できます。追加したカテゴリは支出・収入それぞれに保存されます。</div>
+          </div>
+        </div>
+
+        <h3>デフォルトカテゴリ一覧</h3>
+        <div class="card-grid">
+          <div class="info-card">
+            <div class="icon red"><i class="fas fa-arrow-down"></i></div>
+            <h3>支出カテゴリ</h3>
+            <p>食費・交通費・光熱費・通信費・日用品・医療費・娯楽・衣服・外食・教育・保険・住居・その他</p>
+          </div>
+          <div class="info-card">
+            <div class="icon green"><i class="fas fa-arrow-up"></i></div>
+            <h3>収入カテゴリ</h3>
+            <p>給与・副業・ボーナス・投資・銀行ATM・その他収入</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 4. 予算管理 ===== -->
+    <section id="budget" class="alt">
+      <div class="container">
+        <h2><span class="num">04</span> 予算管理</h2>
+        <p class="section-lead">カテゴリ別に月間予算を設定し、使用状況を進捗バーで確認します。</p>
+
+        <div class="steps">
+          <div class="step-item">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <h4>カテゴリと予算額を入力</h4>
+              <p>支出カテゴリを選択し、予算額を入力して「設定する」ボタンを押します。</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <h4>進捗バーで状況を確認</h4>
+              <p>各カテゴリの使用額・予算額・使用率がバーで表示されます。80%以上で警告色、予算超過で赤色になります。</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <h4>編集・削除</h4>
+              <p>各予算項目の編集ボタンで予算額を変更、削除ボタンで予算設定を削除できます。</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout warn">
+          <div class="callout-icon">⚠️</div>
+          <div class="callout-body">
+            <div class="callout-title">重複設定の制限</div>
+            <div class="callout-text">同一カテゴリの予算は1件のみ設定できます。既に設定済みのカテゴリは編集してください。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 5. 分析 ===== -->
+    <section id="analysis">
+      <div class="container">
+        <h2><span class="num">05</span> 分析</h2>
+        <p class="section-lead">3種類のグラフで家計の傾向を分析します。</p>
+
+        <div class="card-grid">
+          <div class="info-card">
+            <div class="icon blue"><i class="fas fa-chart-bar"></i></div>
+            <h3>月別収支比較</h3>
+            <p>過去12ヶ月の収入・支出を棒グラフで比較。毎月の収支バランスの変化を把握できます。</p>
+          </div>
+          <div class="info-card">
+            <div class="icon green"><i class="fas fa-chart-pie"></i></div>
+            <h3>収入カテゴリ内訳</h3>
+            <p>選択中の月の収入カテゴリの構成比を円グラフで表示。収入源の偏りを確認できます。</p>
+          </div>
+          <div class="info-card">
+            <div class="icon red"><i class="fas fa-calendar-alt"></i></div>
+            <h3>日別支出推移</h3>
+            <p>選択中の月の日別累計支出を折れ線グラフで表示。支出が集中している日を把握できます。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 6. 預金口座管理 ===== -->
+    <section id="accounts" class="alt">
+      <div class="container">
+        <h2><span class="num">06</span> 預金口座管理</h2>
+        <p class="section-lead">銀行口座を登録し、入出金履歴を管理します。</p>
+
+        <h3><i class="fas fa-building-columns" style="color:var(--primary)"></i> 口座の登録・編集</h3>
+        <div class="card">
+          <div class="steps">
+            <div class="step-item">
+              <div class="step-num">1</div>
+              <div class="step-body">
+                <h4>「口座を追加」ボタンをクリック</h4>
+                <p>口座一覧の右上にあるボタンから追加フォームを開きます。</p>
+              </div>
+            </div>
+            <div class="step-item">
+              <div class="step-num">2</div>
+              <div class="step-body">
+                <h4>銀行名・口座名称・種別・カラー・初期残高を入力</h4>
+                <p>種別は普通・当座・定期・貯蓄・証券・その他から選択。カラーは8色から選べます。</p>
+              </div>
+            </div>
+            <div class="step-item">
+              <div class="step-num">3</div>
+              <div class="step-body">
+                <h4>「登録する」で保存</h4>
+                <p>口座カード一覧に追加され、合計残高サマリーにも反映されます。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3><i class="fas fa-list-ul" style="color:var(--primary)"></i> 取引明細の追加</h3>
+        <div class="card">
+          <p>口座を選択後、「明細を追加」ボタンから取引を登録します。</p>
+          <table class="mockup-table">
+            <thead><tr><th>項目</th><th>説明</th></tr></thead>
+            <tbody>
+              <tr><td><strong>日付</strong></td><td>取引日（初期値=今日）</td></tr>
+              <tr><td><strong>種別</strong></td><td>出金 / 入金 / 振込（出） / 振込（入）</td></tr>
+              <tr><td><strong>金額</strong></td><td>取引金額</td></tr>
+              <tr><td><strong>種類</strong></td><td>ATM出金・給与・食費など（datalistから選択 or 自由入力）</td></tr>
+              <tr><td><strong>摘要</strong></td><td>メモ（任意）</td></tr>
+              <tr><td><strong>相手口座</strong></td><td>振込時のみ表示。送金先・元金口座を選択</td></tr>
+              <tr><td><strong>家計簿連携</strong></td><td>出金時のみ表示（後述）</td></tr>
+            </tbody>
+          </table>
+          <p>登録後、口座残高が自動計算され、残高欄に反映されます。</p>
+        </div>
+
+        <h3><i class="fas fa-right-left" style="color:var(--primary)"></i> 口座間振込</h3>
+        <div class="card">
+          <p>種別を「振込（出）」または「振込（入）」にし、相手口座を選択すると、相手口座側にも対応する取引が自動作成されます。両口座の残高が同時に更新されます。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 7. 家計簿連携 ===== -->
+    <section id="link">
+      <div class="container">
+        <h2><span class="num">07</span> 家計簿連携</h2>
+        <p class="section-lead">口座出金時に、家計簿（収支データ）へ自動で取引を登録する機能です。</p>
+
+        <div class="callout info">
+          <div class="callout-icon">ℹ️</div>
+          <div class="callout-body">
+            <div class="callout-title">連携の仕組み</div>
+            <div class="callout-text">口座から現金を引き出した際、その金額を家計簿の「収入」として記録することで、現金ベースの家計管理ができます。「種類」名が家計簿の収入/支出カテゴリとして使用されます。</div>
+          </div>
+        </div>
+
+        <h3><i class="fas fa-link" style="color:var(--primary)"></i> 連携モード（出金時のみ選択可）</h3>
+        <div class="link-mode-list">
+          <div class="link-mode-item">
+            <div class="lm-num n0">0</div>
+            <div>
+              <h4>連携なし <span class="badge" style="background:var(--gray-100);color:var(--text-muted)">デフォルト</span></h4>
+              <p>口座取引のみ登録。家計簿へは何も記録されません。</p>
+            </div>
+          </div>
+          <div class="link-mode-item">
+            <div class="lm-num n1">1</div>
+            <div>
+              <h4>家計簿の収入へ連携 <span class="badge green">収入</span></h4>
+              <p>口座出金と同時に、家計簿へ<span class="badge green">収入</span>取引を1件自動登録します。カテゴリは「種類」名、メモは「{口座名}より / {摘要}」。</p>
+              <p>例: 種類「ATM出金」→ 家計簿へ収入カテゴリ「ATM出金」として登録</p>
+            </div>
+          </div>
+          <div class="link-mode-item">
+            <div class="lm-num n2">2</div>
+            <div>
+              <h4>家計簿の入出金へ連携 <span class="badge blue">収入+支出</span></h4>
+              <p>口座出金と同時に、家計簿へ<span class="badge green">収入</span>と<span class="badge red">支出</span>の2件を自動登録します。どちらもカテゴリは「種類」名。</p>
+              <p>例: 種類「食費」→ 家計簿へ収入「食費」と支出「食費」の2件を登録</p>
+            </div>
+          </div>
+        </div>
+
+        <h3><i class="fas fa-edit" style="color:var(--primary)"></i> 編集・削除時の動作</h3>
+        <div class="card">
+          <ul>
+            <li><strong>編集時</strong>: 連携モードを変更すると、家計簿側の取引も自動的に更新・作成・削除されます</li>
+            <li><strong>削除時</strong>: 口座取引を削除すると、連携されている家計簿取引も同時に削除されます</li>
+            <li><strong>即時反映</strong>: 連携により家計簿取引が作成/更新/削除されると、サマリーバー・ダッシュボードに即座に反映されます</li>
+          </ul>
+        </div>
+
+        <h3><i class="fas fa-link" style="color:var(--income)"></i> 連携状態の見分け方</h3>
+        <div class="card">
+          <p>口座取引明細テーブルの摘要欄に、連携状態に応じたバッジが表示されます:</p>
+          <ul>
+            <li><span class="badge green">家計簿収入</span> — モード1で連携済み</li>
+            <li><span class="badge blue">家計簿入出金</span> — モード2で連携済み</li>
+            <li>バッジなし — 連携なし</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 8. スマホ入力 ===== -->
+    <section id="mobile" class="alt">
+      <div class="container">
+        <h2><span class="num">08</span> スマホ入力</h2>
+        <p class="section-lead">スマートフォン専用の入力画面です。テンキーで素早く入力できます。</p>
+
+        <div class="callout info">
+          <div class="callout-icon">📱</div>
+          <div class="callout-body">
+            <div class="callout-title">アクセス方法</div>
+            <div class="callout-text">サイドバーの「スマホ入力」リンク、またはダッシュボードのバナーから別タブで開きます。スマホのブラウザでの利用を想定しています。</div>
+          </div>
+        </div>
+
+        <h3><i class="fas fa-tablet" style="color:var(--primary)"></i> 3つのタブ</h3>
+        <div class="card-grid">
+          <div class="info-card">
+            <div class="icon red"><i class="fas fa-arrow-down"></i></div>
+            <h3>支出タブ</h3>
+            <p>支出を記録。カテゴリチップから選択、テンキーで金額入力、詳細パネルで日付・メモを入力。</p>
+          </div>
+          <div class="info-card">
+            <div class="icon green"><i class="fas fa-arrow-up"></i></div>
+            <h3>収入タブ</h3>
+            <p>収入を記録。操作手順は支出と同じ。カテゴリは収入用に切り替わります。</p>
+          </div>
+          <div class="info-card">
+            <div class="icon blue"><i class="fas fa-building-columns"></i></div>
+            <h3>口座タブ</h3>
+            <p>口座の入出金を記録。口座選択・入金/出金切替・種類選択・家計簿連携モードを選択可能。</p>
+          </div>
+        </div>
+
+        <h3><i class="fas fa-keyboard" style="color:var(--primary)"></i> 入力手順</h3>
+        <div class="steps">
+          <div class="step-item">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <h4>タブを選択して金額を入力</h4>
+              <p>テンキーで金額を入力。「000」「00」ボタンで素早く入力できます。最大10桁まで入力可能です。</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <h4>「次へ」ボタンで詳細パネルを開く</h4>
+              <p>金額を入力後、「次へ」をタップするとスライドアップで詳細入力パネルが開きます。</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <h4>日付・カテゴリ（種類）・メモを入力</h4>
+              <p>日付は昨日/今日/明日のクイックボタンまたは日付ピッカー。カテゴリ（口座モード時は口座・種類）をチップから選択。メモは任意。</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <h4>「登録する」で保存</h4>
+              <p>完了アニメーションが表示され、フォームがリセットされます。連続入力モードをONにすると詳細パネルが開いたまま次の入力へ進めます。</p>
+            </div>
+          </div>
+        </div>
+
+        <h3><i class="fas fa-building-columns" style="color:var(--primary)"></i> 口座タブの詳細</h3>
+        <div class="card">
+          <table class="mockup-table">
+            <thead><tr><th>項目</th><th>説明</th></tr></thead>
+            <tbody>
+              <tr><td><strong>口座</strong></td><td>チップから対象口座を選択</td></tr>
+              <tr><td><strong>入金 / 出金</strong></td><td>トグルボタンで切替。出金時のみ家計簿連携が表示</td></tr>
+              <tr><td><strong>種類</strong></td><td>ATM出金・食費・交通費などからチップで選択</td></tr>
+              <tr><td><strong>家計簿連携</strong></td><td>出金時のみ表示。連携なし / 収入へ連携 / 入出金へ連携</td></tr>
+              <tr><td><strong>メモ</strong></td><td>摘要として登録（任意）</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><i class="fas fa-clock-rotate-left" style="color:var(--primary)"></i> 履歴パネル</h3>
+        <div class="card">
+          <p>ヘッダーの時計アイコンから、今日登録した取引の一覧を表示できます。支出合計・収入合計も表示されます。</p>
+        </div>
+
+        <h3><i class="fas fa-tags" style="color:var(--primary)"></i> カテゴリの追加</h3>
+        <div class="card">
+          <p>家計簿モード（支出/収入タブ）時、「カテゴリを追加」ボタンから新しいカテゴリを作成できます。追加したカテゴリはブラウザのlocalStorageに保存されます。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 9. FAQ ===== -->
+    <section id="faq">
+      <div class="container">
+        <h2><span class="num">09</span> よくある質問</h2>
+        <p class="section-lead">よく寄せられる質問をまとめました。</p>
+
+        <div class="card">
+          <h3>Q. データはどこに保存されますか？</h3>
+          <p>A. サーバー内のSQLiteデータベースに保存されます。ブラウザを閉じてもデータは失われません。バックアップは「エクスポートAPI」でJSON形式で取得できます。</p>
+        </div>
+        <div class="card">
+          <h3>Q. 複数人で同時に使えますか？</h3>
+          <p>A. 同じサーバーにアクセスすれば複数端末から利用可能ですが、同時編集による競合には対応していません。編集は1人ずつ行うことを推奨します。</p>
+        </div>
+        <div class="card">
+          <h3>Q. 開始残高を設定し忘れた場合どうなりますか？</h3>
+          <p>A. 未保存時は前月の繰越が自動計算されます。最初の月は0円からスタートしますので、最初の月の開始残高だけ手動で設定すれば、以降は自動で連鎖計算されます。</p>
+        </div>
+        <div class="card">
+          <h3>Q. 家計簿連携で作成された取引を手動で編集してもよいですか？</h3>
+          <p>A. 可能ですが、口座取引側を編集・削除すると家計簿側も自動更新されるため、整合性が崩れる場合があります。連携取引の編集は口座取引側から行うことを推奨します。</p>
+        </div>
+        <div class="card">
+          <h3>Q. 口座間振込と家計簿連携は併用できますか？</h3>
+          <p>A. 家計簿連携は「出金」種別時のみ有効です。振込（出）では連携できません。口座間の資金移動は家計簿の収支に影響させない設計です。</p>
+        </div>
+        <div class="card">
+          <h3>Q. スマホ入力で追加したカテゴリはPC版にも反映されますか？</h3>
+          <p>A. スマホ入力のカテゴリはブラウザのlocalStorageに保存されるため、PC版（サーバーデータ）には自動反映されません。PC版でも同様のカテゴリを追加してください。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Footer ===== -->
+    <footer>
+      <p><a href="index.html"><i class="fas fa-chevron-left"></i> アプリに戻る</a></p>
+      <p style="margin-top: 16px; opacity: 0.6;">マイ家計簿 — 自宅サーバー / NAS 向け家計簿アプリ</p>
+    </footer>
+
+  </body>
+</html>

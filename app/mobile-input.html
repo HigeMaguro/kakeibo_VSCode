@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#1e2a4a" />
+  <title>伝票入力 | MyKakeibo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/mobile-input.css" />
+</head>
+<body>
+
+  <!-- ヘッダー -->
+  <header id="mob-header">
+    <a href="index.html" class="header-back" aria-label="ホームへ戻る">
+      <i class="fas fa-chevron-left"></i>
+    </a>
+    <div class="header-center">
+      <i class="fas fa-wallet"></i>
+      <span>伝票入力</span>
+    </div>
+    <button id="history-toggle-btn" class="header-history-btn" aria-label="履歴を表示">
+      <i class="fas fa-clock-rotate-left"></i>
+    </button>
+  </header>
+
+  <!-- メインフォームエリア -->
+  <main id="mob-main">
+
+    <!-- 収入／支出／口座 タブ -->
+    <div class="type-switcher">
+      <button class="type-btn active" data-type="expense">
+        <i class="fas fa-arrow-down"></i> 支出
+      </button>
+      <button class="type-btn" data-type="income">
+        <i class="fas fa-arrow-up"></i> 収入
+      </button>
+      <button class="type-btn" data-type="account">
+        <i class="fas fa-building-columns"></i> 口座
+      </button>
+    </div>
+
+    <!-- 金額表示エリア -->
+    <section class="amount-display-area">
+      <p class="amount-label" id="amount-type-label">支出金額</p>
+      <div class="amount-display" id="amount-display">
+        <span class="amount-unit">¥</span>
+        <span class="amount-value" id="amount-value">0</span>
+      </div>
+      <p class="amount-error" id="amount-error" style="display:none">金額を入力してください</p>
+    </section>
+
+    <!-- テンキー -->
+    <section class="numpad-area" aria-label="テンキー">
+      <div class="numpad-grid">
+        <button class="numpad-btn num" data-val="7">7</button>
+        <button class="numpad-btn num" data-val="8">8</button>
+        <button class="numpad-btn num" data-val="9">9</button>
+        <button class="numpad-btn func clear-btn" data-val="C">C</button>
+
+        <button class="numpad-btn num" data-val="4">4</button>
+        <button class="numpad-btn num" data-val="5">5</button>
+        <button class="numpad-btn num" data-val="6">6</button>
+        <button class="numpad-btn func" data-val="000">000</button>
+
+        <button class="numpad-btn num" data-val="1">1</button>
+        <button class="numpad-btn num" data-val="2">2</button>
+        <button class="numpad-btn num" data-val="3">3</button>
+        <button class="numpad-btn func del-btn" data-val="DEL">
+          <i class="fas fa-delete-left"></i>
+        </button>
+
+        <button class="numpad-btn num zero-btn" data-val="0">0</button>
+        <button class="numpad-btn num" data-val="00">00</button>
+        <button class="numpad-btn func next-btn" data-val="NEXT" id="next-btn">
+          次へ <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===== スライドアップ詳細パネル ===== -->
+  <div id="detail-backdrop" class="detail-backdrop" style="display:none"></div>
+  <section id="detail-panel" class="detail-panel" aria-modal="true" role="dialog" aria-label="詳細入力" style="display:none">
+    <div class="panel-handle"></div>
+
+    <div class="panel-scroll">
+      <h2 class="panel-title">詳細を入力</h2>
+
+      <!-- 日付 -->
+      <div class="field-group">
+        <label class="field-label"><i class="fas fa-calendar-day"></i> 日付</label>
+        <div class="date-row">
+          <button class="date-quick-btn" data-offset="-1">昨日</button>
+          <button class="date-quick-btn active" data-offset="0">今日</button>
+          <button class="date-quick-btn" data-offset="1">明日</button>
+          <input type="date" id="panel-date" class="date-input" />
+        </div>
+      </div>
+
+      <!-- ===== 口座モード専用フィールド ===== -->
+      <div id="account-fields" style="display:none;">
+
+        <!-- 口座選択 -->
+        <div class="field-group">
+          <label class="field-label"><i class="fas fa-building-columns"></i> 口座</label>
+          <div id="account-chips" class="category-chips"></div>
+        </div>
+
+        <!-- 入金/出金 -->
+        <div class="field-group">
+          <label class="field-label"><i class="fas fa-right-left"></i> 種別</label>
+          <div class="acct-type-switcher">
+            <button class="acct-type-btn active" data-acct-type="withdrawal">
+              <i class="fas fa-arrow-up"></i> 出金
+            </button>
+            <button class="acct-type-btn" data-acct-type="deposit">
+              <i class="fas fa-arrow-down"></i> 入金
+            </button>
+          </div>
+        </div>
+
+        <!-- 種類 -->
+        <div class="field-group">
+          <label class="field-label"><i class="fas fa-tag"></i> 種類</label>
+          <div id="acct-cat-chips" class="category-chips"></div>
+        </div>
+
+        <!-- 家計簿連携 -->
+        <div class="field-group" id="acct-link-group">
+          <label class="field-label"><i class="fas fa-link"></i> 家計簿連携</label>
+          <select id="acct-link-mode" class="acct-link-select">
+            <option value="0">連携なし</option>
+            <option value="1">家計簿の収入へ連携</option>
+            <option value="2">家計簿の入出金へ連携</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- ===== 家計簿モード専用フィールド ===== -->
+      <div id="kakeibo-fields">
+        <!-- カテゴリ -->
+        <div class="field-group">
+          <label class="field-label"><i class="fas fa-tag"></i> カテゴリ</label>
+          <div id="category-chips" class="category-chips"></div>
+          <button class="add-category-btn" id="add-cat-btn">
+            <i class="fas fa-plus"></i> カテゴリを追加
+          </button>
+        </div>
+      </div>
+
+      <!-- メモ（共通） -->
+      <div class="field-group">
+        <label class="field-label" for="panel-memo"><i class="fas fa-pen-to-square"></i> メモ</label>
+        <input type="text" id="panel-memo" class="memo-input" placeholder="例: コンビニ、スーパーなど" maxlength="50" />
+        <!-- よく使うメモ候補 -->
+        <div id="memo-suggestions" class="memo-suggestions"></div>
+      </div>
+
+      <!-- 登録ボタン -->
+      <button class="submit-btn" id="submit-btn">
+        <i class="fas fa-check"></i> 登録する
+      </button>
+
+      <!-- 連続入力モードトグル -->
+      <label class="continuous-toggle">
+        <input type="checkbox" id="continuous-mode" />
+        <span class="toggle-slider"></span>
+        <span class="toggle-label">連続入力モード（登録後フォームをリセット）</span>
+      </label>
+
+    </div>
+  </section>
+
+  <!-- ===== 履歴ドロワー ===== -->
+  <div id="history-backdrop" class="detail-backdrop" style="display:none"></div>
+  <section id="history-panel" class="history-panel" aria-label="入力履歴" style="display:none">
+    <div class="panel-handle"></div>
+    <div class="panel-scroll">
+      <div class="history-header">
+        <h2 class="panel-title">今日の入力履歴</h2>
+        <span id="history-total" class="history-total"></span>
+      </div>
+      <div id="history-list" class="history-list"></div>
+      <p id="history-empty" class="history-empty" style="display:none">
+        <i class="fas fa-inbox"></i><br>今日の取引はまだありません
+      </p>
+    </div>
+  </section>
+
+  <!-- ===== カテゴリ追加モーダル ===== -->
+  <div id="cat-modal-overlay" class="cat-modal-overlay" style="display:none">
+    <div class="cat-modal">
+      <h3>カテゴリを追加</h3>
+      <input type="text" id="new-cat-input" placeholder="カテゴリ名" maxlength="20" />
+      <div class="cat-modal-actions">
+        <button id="cat-modal-cancel" class="btn-ghost">キャンセル</button>
+        <button id="cat-modal-add" class="btn-primary-sm">追加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 完了フィードバック（アニメーション） ===== -->
+  <div id="success-overlay" class="success-overlay" style="display:none">
+    <div class="success-card">
+      <div class="success-icon"><i class="fas fa-check"></i></div>
+      <p class="success-msg" id="success-msg">登録しました！</p>
+      <p class="success-sub" id="success-sub"></p>
+    </div>
+  </div>
+
+  <!-- トースト -->
+  <div id="mob-toast-container" class="mob-toast-container"></div>
+
+  <script src="js/common.js"></script>
+  <script src="js/mobile-input.js"></script>
+</body>
+</html>

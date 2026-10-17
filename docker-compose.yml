@@ -1,0 +1,21 @@
+# 開発 PC 用: ローカルでイメージをビルドして起動する
+#   docker compose up -d --build
+#   http://localhost:9090
+# NAS 本番は docker-compose.prod.yml (GHCR からイメージを pull) を使う。
+services:
+  kakeibo-app:
+    build:
+      context: .
+      args:
+        APP_VERSION: "${APP_VERSION:-dev}"
+        BUILD_DATE: "${BUILD_DATE:-local}"
+    image: kakeibo-app:dev
+    container_name: kakeibo
+    restart: unless-stopped
+    ports:
+      - "9090:80"
+    volumes:
+      - ./data:/app/data
+      - ./backups:/app/backups
+    environment:
+      - TZ=Asia/Tokyo

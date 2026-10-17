@@ -1,0 +1,78 @@
+# v*.*.* タグを push すると Docker イメージをビルドして GHCR に公開する
+#   ghcr.io/higemaguro/kakeibo:1.2.0
+#   ghcr.io/higemaguro/kakeibo:latest
+# NAS 側は docker-compose.prod.yml で pull するだけ。
+name: Docker publish
+
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:   # 手動実行 (タグ無しの場合は :edge)
+
+env:
+  IMAGE: ghcr.io/higemaguro/kakeibo
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: lint + test
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci && npm run check
+
+      - name: バージョン決定 (タグと package.json の version が一致するか確認)
+        id: ver
+        run: |
+          PKG="$(node -p "require('./package.json').version")"
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            TAG="${GITHUB_REF_NAME#v}"
+            if [ "$TAG" != "$PKG" ]; then
+              echo "::error::git tag v$TAG と package.json version $PKG が一致しません"; exit 1
+            fi
+            echo "version=$TAG" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${PKG}-edge" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: イメージメタデータ
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+            type=raw,value=edge,enable=${{ github.event_name == 'workflow_dispatch' }}
+
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: build & push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          # UGREEN NAS は amd64 が多いが、arm64 NAS でも動くよう両方ビルド
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            APP_VERSION=${{ steps.ver.outputs.version }}
+            BUILD_DATE=${{ github.run_started_at }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

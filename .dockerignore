@@ -1,0 +1,13 @@
+node_modules
+data
+backups
+.git
+.github
+.vscode
+test
+*.md
+*.log
+.gitignore
+.gitattributes
+docker-compose*.yml
+eslint.config.js
