@@ -1268,7 +1268,9 @@ async function init() {
   bindEvents();
 
   await loadAllData();
-  renderDashboard();
+  // 月次サマリーバー (開始残高〜現金残高) とダッシュボードを両方描画する。
+  // renderDashboard() だけだとサマリーバーが月を切り替えるまで ¥0 のままになる。
+  refreshCurrentPage();
 }
 
 document.addEventListener('DOMContentLoaded', init);
