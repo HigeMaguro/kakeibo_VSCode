@@ -1,6 +1,6 @@
 {
   "name": "kakeibo-vscode",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "MyKakeibo - 自宅サーバー/NAS向け家計簿Webアプリケーション",
   "main": "server.js",
   "scripts": {

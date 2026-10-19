@@ -424,6 +424,8 @@ function resetAccountForm() {
   document.getElementById('acct-edit-id').value = '';
   document.getElementById('acct-form-title').innerHTML = '<i class="fas fa-plus-circle"></i> 口座を追加';
   document.getElementById('acct-submit-btn').innerHTML = '<i class="fas fa-check"></i> 登録する';
+  const hint = document.getElementById('acct-initial-hint');
+  if (hint) hint.style.display = 'none';
   renderColorPicker();
 }
 
@@ -438,12 +440,48 @@ function acctStartEditAccount(id) {
   document.getElementById('acct-bank').value       = a.bank_name || '';
   document.getElementById('acct-name').value       = a.name || '';
   document.getElementById('acct-type').value       = a.account_type || '普通';
-  document.getElementById('acct-initial').value    = a.initial_balance || 0;
+  document.getElementById('acct-initial').value    = Number(a.initial_balance) || 0;
   document.getElementById('acct-note').value       = a.note || '';
   document.getElementById('acct-form-title').innerHTML = '<i class="fas fa-pen"></i> 口座を編集';
   document.getElementById('acct-submit-btn').innerHTML = '<i class="fas fa-pen"></i> 更新する';
 
+  updateInitialBalanceHint();
   showAccountForm(true);
+}
+
+/** 口座明細の合計 (入金 − 出金) */
+function sumAccountTxs(accountId) {
+  return acctState.transactions
+    .filter(t => t.account_id === accountId)
+    .reduce((s, t) => s + ((t.type === 'withdrawal' || t.type === 'transfer_out') ? -Number(t.amount || 0) : Number(t.amount || 0)), 0);
+}
+
+/**
+ * 初期残高欄の下に「保存後の残高 = 初期残高 + 明細合計」を表示する。
+ * 現在の残高と変わる場合は警告色で差額を示す (旧データで初期残高が未設定のまま編集して残高が消える事故を防ぐ)。
+ */
+function updateInitialBalanceHint() {
+  const hint = document.getElementById('acct-initial-hint');
+  if (!hint) return;
+  const account = acctState.editingAcctId ? acctState.accounts.find(a => a.id === acctState.editingAcctId) : null;
+  if (!account) { hint.style.display = 'none'; return; }
+
+  const initial = Kakeibo.toYen(document.getElementById('acct-initial').value || '0');
+  const txSum   = sumAccountTxs(account.id);
+  const after   = initial + txSum;
+  const current = Number(account.balance) || 0;
+  const diff    = after - current;
+
+  let html = `保存後の残高: <strong>${acctFormatYen(after)}</strong>（初期残高 ${acctFormatYen(initial)} + 明細合計 ${txSum < 0 ? '−' : '+'}${acctFormatYen(Math.abs(txSum))}）`;
+  if (diff !== 0) {
+    html += `<br>現在の残高 ${acctFormatYen(current)} から <strong>${diff > 0 ? '+' : '−'}${acctFormatYen(Math.abs(diff))}</strong> 変わります。`
+         + ` 現在の残高を維持するには初期残高を <strong>${acctFormatYen(current - txSum)}</strong> にしてください。`;
+    hint.className = 'form-hint warn';
+  } else {
+    hint.className = 'form-hint';
+  }
+  hint.innerHTML = html;
+  hint.style.display = 'block';
 }
 
 async function handleAccountFormSubmit(e) {
@@ -457,6 +495,24 @@ async function handleAccountFormSubmit(e) {
 
   if (!bankName || !name) {
     acctShowToast('銀行名と口座名称を入力してください', 'error'); return;
+  }
+
+  // 編集で残高が変わる場合は確認する (初期残高の変更は残高の再計算に直結するため)
+  if (acctState.editingAcctId) {
+    const account = acctState.accounts.find(a => a.id === acctState.editingAcctId);
+    if (account) {
+      const current = Number(account.balance) || 0;
+      const after   = initialBalance + sumAccountTxs(account.id);
+      if (after !== current) {
+        const ok = confirm(
+          `初期残高を ${acctFormatYen(initialBalance)} にすると、口座残高が\n` +
+          `  ${acctFormatYen(current)} → ${acctFormatYen(after)}\n` +
+          `に変わります（初期残高 + 取引明細の合計で再計算されます）。\n\n` +
+          `よろしいですか？\n（現在の残高を維持する場合はキャンセルし、初期残高を ${acctFormatYen(current - sumAccountTxs(account.id))} にしてください）`
+        );
+        if (!ok) return;
+      }
+    }
   }
 
   const btn = document.getElementById('acct-submit-btn');
@@ -904,6 +960,8 @@ function bindAccountEvents() {
 
   // 口座フォーム送信
   document.getElementById('account-form').addEventListener('submit', handleAccountFormSubmit);
+  // 初期残高の入力に合わせて「保存後の残高」ヒントを更新
+  document.getElementById('acct-initial').addEventListener('input', updateInitialBalanceHint);
 
   // 取引追加ボタン
   document.getElementById('add-acct-tx-btn').addEventListener('click', () => {

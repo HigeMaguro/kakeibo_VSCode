@@ -774,6 +774,15 @@ select:focus { border-color: var(--primary); }
 }
 .form-group label i { color: var(--primary); width: 14px; }
 
+.form-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  line-height: 1.6;
+}
+.form-hint.warn { color: var(--expense); }
+.form-hint strong { font-weight: 600; }
+
 input[type="text"],
 input[type="number"],
 input[type="date"] {
