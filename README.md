@@ -79,8 +79,11 @@ git push origin main --tags                      # → Actions「Docker publish�
 
 ```sh
 cd /volume1/docker/kakeibovs
+sh update-nas.sh --dry-run    # 事前確認 (任意)
 sh update-nas.sh
 ```
+
+`update-nas.sh` は compose ファイルを自動検出する (`docker-compose.prod.yml` / `compose.yaml` / `docker-compose.yml`)。DBは `VACUUM INTO` で一貫バックアップしてから更新し、30世代保持。GUI の「再デプロイ」だけでも更新できるが、その場合は自動バックアップが無いので `data/kakeibo.db` を手動でコピーする。
 
 ブラウザで `http://<NAS の IP>:9090` →「データ管理」ページのバージョン表示が新しくなっていれば完了。
 取引データが表示されていれば DB は引き継がれている。

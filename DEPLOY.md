@@ -80,6 +80,7 @@ docker compose -f docker-compose.prod.yml logs -f   # Ctrl+C で抜ける
 1. 「ファイル」で `docker/kakeibovs` フォルダーを作り、`docker-compose.prod.yml` をアップロード (ファイル名は `docker-compose.yml` に変えてよい)。
 2. 「Docker」→「プロジェクト」→「作成」→ パスに上記フォルダーを指定 → 作成。
 3. 更新時は「プロジェクト」→ 該当プロジェクト →「イメージを更新 (pull)」→「再作成」。更新前に `data/kakeibo.db` を手動でコピーしておくこと。
+4. `update-nas.sh` は **GUI からは実行できない**ため、GUI 運用だけなら配置は不要。SSH が使えるなら同じフォルダーに置いて `sh update-nas.sh` を使うと、DB の自動バックアップと起動確認まで行える (推奨)。スクリプトは `docker-compose.prod.yml` / `compose.yaml` / `docker-compose.yml` を自動検出するので、GUI が作ったファイル名のままで動く。
 
 ---
 
@@ -104,26 +105,51 @@ GitHub → Actions タブで「Docker publish」が緑になったら NAS 側へ
 
 ```sh
 cd /volume1/docker/kakeibovs
-sh update-nas.sh
+sh update-nas.sh                 # latest へ
+sh update-nas.sh 1.2.6          # 特定バージョンに固定
+sh update-nas.sh --dry-run 1.2.6 # 実行内容の確認だけ (変更しない)
 ```
 
 スクリプトの動作:
-1. `data/kakeibo.db` を `backups/kakeibo_YYYYMMDD_HHMMSS.db` にコピー (30 世代保持)
-2. `docker compose pull` で新イメージ取得
-3. `docker compose up -d` で再作成 (`data/` はマウントなので DB は保持)
-4. `/api/version` を表示して完了
+1. **compose を自動検出** (`docker-compose.prod.yml` → `compose.yaml` → `docker-compose.yml` → `docker compose ls` の順。`-f` で明示可)
+2. **事前チェック**: 構文 / `/app/data` マウント / サービス名 / 稼働状態 (`/app/data` が無ければ DB 保護のため中止)
+3. `data/kakeibo.db` を `backups/kakeibo_YYYYMMDD_HHMMSS.db` にバックアップ
+   - 稼働中は `node:sqlite` の `VACUUM INTO` で**一貫スナップショット**を作成し `PRAGMA quick_check` で検証
+   - 失敗時は従来の `cp` (本体 + `-wal`) にフォールバック
+   - 30 世代保持
+4. イメージタグを書き換え (`.bak` を保存し、構文検証に失敗したら自動で戻す) → `pull` → `up -d`
+5. `/api/version` を最大 40 秒ポーリングして稼働バージョンを表示
+
+オプション:
+
+| オプション | 内容 |
+|---|---|
+| `-f, --file FILE` | compose を明示 |
+| `--tag TAG` | タグ指定 (位置引数と同じ) |
+| `--no-backup` | バックアップを省略 |
+| `--no-edit` | compose のタグを書き換えない (GUI 管理を維持し、現在のタグのまま pull) |
+| `--dry-run` | 表示のみ |
+| `--rollback` | 直近バックアップから DB を復元 |
+
+> GUI プロジェクトと同じ compose を編集するので、GUI の「再デプロイ」と併用できる。同時実行は避けること。
 
 ## 5. ロールバック
 
 ```sh
-sh update-nas.sh 1.2.0        # 旧バージョンのタグに固定して再作成
-# DB も戻す必要がある場合 (通常は不要。スキーマは後方互換)
+sh update-nas.sh 1.2.0        # 旧バージョンのタグに固定して再作成 (DB はそのまま)
+sh update-nas.sh latest       # 最新に戻す
+
+# DB も戻す (直近バックアップから復元。確認プロンプトあり)
+sh update-nas.sh --rollback
+```
+
+`--rollback` は `backups/` の最新 `kakeibo_*.db` を `data/kakeibo.db` に戻し、`-wal` / `-shm` を削除してから起動します。手動で行う場合:
+
+```sh
 docker compose -f docker-compose.prod.yml stop
 cp backups/kakeibo_YYYYMMDD_HHMMSS.db data/kakeibo.db && rm -f data/kakeibo.db-wal data/kakeibo.db-shm
 docker compose -f docker-compose.prod.yml start
 ```
-
-`:latest` に戻すには `sh update-nas.sh latest`。
 
 ---
 
