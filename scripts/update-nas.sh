@@ -162,6 +162,15 @@ else
   info "      コンテナ未起動 ($CTN_NAME)"
 fi
 
+# ポート競合チェック (別コンテナが同じポートを公開している場合)
+PORT_HOLDER=$(docker ps --filter "publish=${PORT}" --format '{{.Names}}' 2>/dev/null | grep -v "^${CTN_NAME}$" | head -1 || true)
+if [ -n "$PORT_HOLDER" ]; then
+  warn "ポート $PORT は既にコンテナ '$PORT_HOLDER' が使用中です"
+  warn "  停止してから再実行してください:"
+  warn "    docker stop $PORT_HOLDER && docker rm $PORT_HOLDER"
+  die "ポート競合のため中止しました (コンテナ・DB は変更していません)"
+fi
+
 # ---------------------------------------------------------------
 # ロールバック
 # ---------------------------------------------------------------
