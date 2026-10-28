@@ -7,7 +7,8 @@
 #   4. イメージタグを書き換えて pull → 再作成 → 起動確認
 set -eu
 
-IMAGE_REPO="ghcr.io/higemaguro/kakeibo"
+IMAGE_CANONICAL="ghcr.io/higemaguro/kakeibo"
+IMAGE_OVERRIDE=""
 DEFAULT_PORT=9090
 RETENTION=30
 
@@ -34,6 +35,7 @@ usage() {
 オプション:
   -f, --file FILE   compose ファイルを指定
       --tag TAG     イメージタグ (位置引数と同じ)
+      --image REPO  image を丸ごと差し替え (例: ghcr.io/higemaguro/kakeibo)
       --no-backup   バックアップを省略
       --no-edit     compose のタグ書き換えをしない (GUI 管理を維持)
       --dry-run     実行内容の表示のみ
@@ -50,6 +52,8 @@ while [ $# -gt 0 ]; do
     --file=*)       COMPOSE_ARG="${1#*=}"; shift ;;
     --tag)          [ $# -ge 2 ] || die "--tag には値が必要です"; TAG="$2"; shift 2 ;;
     --tag=*)        TAG="${1#*=}"; shift ;;
+    --image)        [ $# -ge 2 ] || die "--image には値が必要です"; IMAGE_OVERRIDE="$2"; shift 2 ;;
+    --image=*)      IMAGE_OVERRIDE="${1#*=}"; shift ;;
     --no-backup)    DO_BACKUP=0; shift ;;
     --no-edit)      DO_EDIT=0; shift ;;
     --dry-run)      DRY_RUN=1; shift ;;
@@ -128,8 +132,20 @@ info "      構文 OK / データ: $DATA_DIR / バックアップ: $BACKUP_DIR /
 if ! grep -q '/app/data' "$COMPOSE"; then
   die "compose に /app/data へのマウントが見つかりません。DB 消失を防ぐため中止しました。"
 fi
-if ! grep -q "$IMAGE_REPO" "$COMPOSE"; then
-  warn "compose に $IMAGE_REPO が見つかりません (別イメージを指している可能性)"
+# image 行を検出 (パッケージ名は固定しない)
+IMAGE_LINE=$(grep -E '^[[:space:]]*image:' "$COMPOSE" | head -1 | sed -E 's/^[[:space:]]*image:[[:space:]]*//; s/[[:space:]]*$//' || true)
+IMAGE_REPO_DETECTED=""
+if [ -n "$IMAGE_LINE" ]; then
+  IMAGE_REPO_DETECTED=$(printf '%s' "$IMAGE_LINE" | sed -E 's/:[^:\/]+$//')
+  info "      image: $IMAGE_LINE"
+else
+  warn "compose に image 行が見つかりません"
+fi
+if [ -n "$IMAGE_OVERRIDE" ]; then
+  info "      --image 指定により $IMAGE_OVERRIDE:$TAG に差し替えます"
+elif [ -n "$IMAGE_REPO_DETECTED" ] && [ "$(printf '%s' "$IMAGE_REPO_DETECTED" | tr 'A-Z' 'a-z')" != "$IMAGE_CANONICAL" ]; then
+  warn "image が公開イメージと異なります: $IMAGE_REPO_DETECTED"
+  warn "  公開イメージは $IMAGE_CANONICAL です。切り替えるには: sh update-nas.sh --image $IMAGE_CANONICAL $TAG"
 fi
 
 SVC=$(compose config --services 2>/dev/null | head -1 || true)
@@ -220,28 +236,53 @@ fi
 # ---------------------------------------------------------------
 # タグ書き換え
 # ---------------------------------------------------------------
+# image 行のタグだけ差し替える (repo 指定時は丸ごと置換)
+rewrite_image() {
+  awk -v tag="$1" -v repo="$2" '
+    /^[[:space:]]*image:/ && !done {
+      if (repo != "") {
+        match($0, /^[[:space:]]*/)
+        $0 = substr($0, 1, RLENGTH) "image: " repo ":" tag
+      } else if ($0 ~ /:[^\/[:space:]]+[[:space:]]*$/) {
+        sub(/:[^\/[:space:]]+[[:space:]]*$/, ":" tag)
+      } else {
+        sub(/[[:space:]]*$/, "")
+        $0 = $0 ":" tag
+      }
+      done = 1
+    }
+    { print }
+  ' "$COMPOSE" > "$COMPOSE.tmp"
+  mv "$COMPOSE.tmp" "$COMPOSE"
+}
+
 info "[3/5] イメージタグ: $TAG"
 if [ "$DO_EDIT" = 0 ]; then
   info "      --no-edit のため書き換えません (現在のタグのまま pull)"
 elif [ "$DRY_RUN" = 1 ]; then
-  info "      $COMPOSE の image 行を $IMAGE_REPO:$TAG に書き換え予定"
-else
-  if grep -q "$IMAGE_REPO" "$COMPOSE"; then
-    CURRENT=$(grep -oE "$IMAGE_REPO:[^[:space:]]+" "$COMPOSE" | head -1 | sed "s#.*:##")
-    if [ "$CURRENT" = "$TAG" ]; then
-      info "      既に $TAG のため変更なし"
-    else
-      cp "$COMPOSE" "$COMPOSE.bak"
-      sed -i -E "s#($IMAGE_REPO):[^[:space:]]+#\1:${TAG}#" "$COMPOSE"
-      if compose config -q 2>/dev/null; then
-        info "      $CURRENT -> $TAG ($COMPOSE.bak を保存)"
-      else
-        mv "$COMPOSE.bak" "$COMPOSE"
-        die "タグ書き換え後の構文チェックに失敗したため元に戻しました"
-      fi
-    fi
+  if [ -n "$IMAGE_OVERRIDE" ]; then
+    info "      image を $IMAGE_OVERRIDE:$TAG に差し替え予定"
+  elif [ -n "$IMAGE_LINE" ]; then
+    info "      $IMAGE_LINE のタグを $TAG に書き換え予定"
   else
-    warn "image 行が見つからないためタグを書き換えません"
+    info "      (image 行が無いため書き換えません)"
+  fi
+else
+  CURRENT_TAG=$(printf '%s' "$IMAGE_LINE" | sed -nE 's#^.*:([^:/]+)$#\1#p' || true)
+  if [ -z "$IMAGE_LINE" ]; then
+    warn "image 行が無いためタグを書き換えません"
+  elif [ -z "$IMAGE_OVERRIDE" ] && [ "$CURRENT_TAG" = "$TAG" ]; then
+    info "      既に $TAG のため変更なし"
+  else
+    cp "$COMPOSE" "$COMPOSE.bak"
+    rewrite_image "$TAG" "$IMAGE_OVERRIDE"
+    if compose config -q 2>/dev/null; then
+      NEW_LINE=$(grep -E '^[[:space:]]*image:' "$COMPOSE" | head -1 | sed -E 's/^[[:space:]]*image:[[:space:]]*//; s/[[:space:]]*$//')
+      info "      $IMAGE_LINE -> $NEW_LINE ($COMPOSE.bak を保存)"
+    else
+      mv "$COMPOSE.bak" "$COMPOSE"
+      die "タグ書き換え後の構文チェックに失敗したため元に戻しました"
+    fi
   fi
 fi
 

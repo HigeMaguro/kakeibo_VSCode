@@ -126,12 +126,15 @@ sh update-nas.sh --dry-run 1.2.6 # 実行内容の確認だけ (変更しない)
 |---|---|
 | `-f, --file FILE` | compose を明示 |
 | `--tag TAG` | タグ指定 (位置引数と同じ) |
+| `--image REPO` | image を丸ごと差し替え (例: `ghcr.io/higemaguro/kakeibo`) |
 | `--no-backup` | バックアップを省略 |
 | `--no-edit` | compose のタグを書き換えない (GUI 管理を維持し、現在のタグのまま pull) |
 | `--dry-run` | 表示のみ |
 | `--rollback` | 直近バックアップから DB を復元 |
 
 > GUI プロジェクトと同じ compose を編集するので、GUI の「再デプロイ」と併用できる。同時実行は避けること。
+>
+> 公開先パッケージは `ghcr.io/higemaguro/kakeibo` (`.github/workflows/docker-publish.yml` の `IMAGE`)。GUI が `kakeibo_VSCode` など別名を指している場合は、そのパッケージには新タグが存在しないため `--image ghcr.io/higemaguro/kakeibo` を付けて切り替える。スクリプトは別名でも止まらず、警告と切り替えコマンドを表示する。
 
 ## 5. ロールバック
 
