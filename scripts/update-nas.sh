@@ -152,11 +152,14 @@ SVC=$(compose config --services 2>/dev/null | head -1 || true)
 [ -n "$SVC" ] || die "compose からサービス名を取得できませんでした"
 info "      サービス: $SVC"
 
-RUNNING=$(compose ps -q "$SVC" 2>/dev/null | head -1 || true)
+CTN_NAME=$(sed -nE 's/^[[:space:]]*container_name:[[:space:]]*([^[:space:]#]+).*/\1/p' "$COMPOSE" | head -1 | tr -d '"' || true)
+[ -n "$CTN_NAME" ] || CTN_NAME="$SVC"
+RUNNING=$(docker ps -q --filter "name=^${CTN_NAME}$" 2>/dev/null | head -1 || true)
+[ -n "$RUNNING" ] || RUNNING=$(compose ps -q "$SVC" 2>/dev/null | head -1 || true)
 if [ -n "$RUNNING" ]; then
-  info "      稼働中のコンテナを検出"
+  info "      稼働中のコンテナを検出 ($CTN_NAME)"
 else
-  info "      コンテナ未起動 (初回セットアップとして続行)"
+  info "      コンテナ未起動 ($CTN_NAME)"
 fi
 
 # ---------------------------------------------------------------
@@ -294,16 +297,21 @@ if [ "$DRY_RUN" = 1 ]; then
   info "      (dry-run のため実行しません)"
 else
   PULL_LOG=$(mktemp 2>/dev/null || echo "/tmp/kakeibo_pull.$$")
-  if ! compose pull 2>&1 | tee "$PULL_LOG"; then
-    if grep -qiE 'unauthorized|denied|authentication required' "$PULL_LOG" 2>/dev/null; then
+  if ! compose pull >"$PULL_LOG" 2>&1; then
+    cat "$PULL_LOG" >&2 || true
+    if grep -qi 'manifest unknown' "$PULL_LOG" 2>/dev/null; then
+      warn "タグ $TAG は GHCR にまだ公開されていません (ビルド未完了の可能性)"
+      warn "  公開済みタグを指定してください (例: sh update-nas.sh 1.2.6)"
+    elif grep -qiE 'unauthorized|denied|authentication required' "$PULL_LOG" 2>/dev/null; then
       warn "GHCR の認証が必要です:"
       warn "  echo <PAT> | docker login ghcr.io -u HigeMaguro --password-stdin"
     fi
     rm -f "$PULL_LOG"
-    die "イメージの取得に失敗しました"
+    die "イメージの取得に失敗しました。コンテナは変更していません。"
   fi
+  cat "$PULL_LOG"
   rm -f "$PULL_LOG"
-  compose up -d --remove-orphans
+  compose up -d --remove-orphans --force-recreate
   docker image prune -f >/dev/null 2>&1 || true
 fi
 
@@ -327,7 +335,14 @@ while [ "$i" -lt 20 ]; do
   fi
   if [ -n "$BODY" ]; then
     info "      $BODY"
-    info "更新完了"
+    GOT=$(printf '%s' "$BODY" | sed -nE 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p')
+    if [ -n "$TAG" ] && [ "$TAG" != "latest" ] && [ -n "$GOT" ] && [ "$GOT" != "$TAG" ]; then
+      warn "起動中のバージョンは $GOT で、指定した $TAG と一致しません (反映されていません)"
+      warn "  確認: docker compose -f $COMPOSE ps"
+      warn "  再実行: docker compose -f $COMPOSE pull && docker compose -f $COMPOSE up -d --force-recreate"
+      exit 1
+    fi
+    info "更新完了 (version: ${GOT:-不明})"
     exit 0
   fi
   i=$((i + 1))
