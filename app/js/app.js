@@ -41,6 +41,7 @@ const state = {
   expenseCategories: [...EXPENSE_CATEGORIES_DEFAULT],
   incomeCategories:  [...INCOME_CATEGORIES_DEFAULT],
   inputType: 'expense',
+  expenseFilter: '', // 支出明細ページのカテゴリ絞り込み
   charts: {},
 };
 
@@ -229,6 +230,7 @@ function navigateTo(pageName, skipHistory = false) {
     input:        '収支を入力',
     budget:       '予算管理',
     analysis:     '分析',
+    expenses:     '支出明細',
     accounts:     '預金口座管理',
     datamanage:   'データ管理',
   };
@@ -251,6 +253,7 @@ function refreshCurrentPage() {
     case 'input':        renderInputForm(); break;
     case 'budget':       renderBudget(); break;
     case 'analysis':     renderAnalysis(); break;
+    case 'expenses':     renderExpensesPage(); break;
     case 'accounts':
       if (typeof renderAccountsPage === 'function') {
         renderAccountsPage().catch(err => {
@@ -865,6 +868,8 @@ function renderAnalysis() {
   renderMonthlyBarChart();
   renderIncomePieChart();
   renderDailyLineChart();
+  renderDailyStackChart();
+  renderExpenseHeatmap();
 }
 
 function renderMonthlyBarChart() {
@@ -973,6 +978,252 @@ function renderDailyLineChart() {
       }
     }
   });
+}
+
+// ===================================================
+// 分析: 日別×カテゴリ積み上げ / 支出カレンダー / 支出明細ページ
+// ===================================================
+function getMonthExpenseTx(year, month) {
+  return getMonthTransactions(year, month).filter(t => t.type === 'expense');
+}
+
+function dayOfMonth(dateStr) {
+  return Number(String(dateStr).slice(8, 10));
+}
+
+function sumByCategory(txs) {
+  const map = {};
+  txs.forEach(t => { map[t.category] = (map[t.category] || 0) + Number(t.amount); });
+  return map;
+}
+
+/** 日別×カテゴリの積み上げ棒グラフ */
+function renderDailyStackChart() {
+  const y = state.currentYear, m = state.currentMonth;
+  const txs = getMonthExpenseTx(y, m);
+  const days = new Date(y, m, 0).getDate();
+  const summaryEl = document.getElementById('daily-stack-summary');
+  const noMsg = document.getElementById('no-daily-stack-msg');
+  const existing = state.charts.dailyStack;
+
+  const catTotals = sumByCategory(txs);
+  const cats = Object.keys(catTotals).sort((a, b) => catTotals[b] - catTotals[a]);
+
+  if (cats.length === 0) {
+    if (summaryEl) summaryEl.innerHTML = '';
+    if (noMsg) noMsg.style.display = 'block';
+    if (existing) { existing.destroy(); state.charts.dailyStack = null; }
+    return;
+  }
+  if (noMsg) noMsg.style.display = 'none';
+
+  const total = Object.values(catTotals).reduce((a, b) => a + b, 0);
+  const usedDays = new Set(txs.map(t => t.date)).size;
+  if (summaryEl) {
+    summaryEl.innerHTML =
+      `<span class="hm-chip">合計 <b>${formatYen(total)}</b></span>` +
+      `<span class="hm-chip">カテゴリ <b>${cats.length}</b></span>` +
+      `<span class="hm-chip">支出日 <b>${usedDays}日</b></span>`;
+  }
+
+  const matrix = {};
+  cats.forEach(c => { matrix[c] = new Array(days).fill(0); });
+  txs.forEach(t => {
+    const d = dayOfMonth(t.date);
+    if (d >= 1 && d <= days && matrix[t.category]) matrix[t.category][d - 1] += Number(t.amount);
+  });
+
+  const labels = Array.from({ length: days }, (_, i) => `${i + 1}日`);
+  const colors = generateColors(cats.length);
+  const datasets = cats.map((cat, i) => ({
+    label: cat,
+    data: matrix[cat],
+    backgroundColor: colors[i],
+    stack: 'expense',
+    borderRadius: 3,
+    borderSkipped: false,
+  }));
+
+  const ctx = document.getElementById('dailyStackChart').getContext('2d');
+  if (existing) existing.destroy();
+  state.charts.dailyStack = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { family: 'Noto Sans JP', size: 11 }, boxWidth: 10, padding: 10 } },
+        tooltip: {
+          callbacks: {
+            label: c => ` ${c.dataset.label}: ${formatYen(c.raw)}`,
+            footer: items => {
+              if (!items.length) return '';
+              const d = items[0].dataIndex;
+              const dayTotal = txs.filter(t => dayOfMonth(t.date) === d + 1)
+                .reduce((s, t) => s + Number(t.amount), 0);
+              return `合計: ${formatYen(dayTotal)}`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { stacked: true, ticks: { font: { family: 'Noto Sans JP', size: 10 } } },
+        y: {
+          stacked: true,
+          ticks: { callback: v => `¥${Math.round(v / 10000)}万`, font: { family: 'Noto Sans JP', size: 10 } }
+        }
+      }
+    }
+  });
+}
+
+/** 日×カテゴリのヒートマップ表。セルクリックで支出明細ページへ */
+function renderExpenseHeatmap() {
+  const y = state.currentYear, m = state.currentMonth;
+  const txs = getMonthExpenseTx(y, m);
+  const days = new Date(y, m, 0).getDate();
+  const table = document.getElementById('expense-heatmap');
+  const scale = document.getElementById('heatmap-scale');
+  if (!table) return;
+
+  const catTotals = sumByCategory(txs);
+  const cats = Object.keys(catTotals).sort((a, b) => catTotals[b] - catTotals[a]);
+  const colors = generateColors(cats.length);
+
+  if (cats.length === 0) {
+    table.innerHTML = '<tbody><tr><td class="hm-empty">この月の支出はありません</td></tr></tbody>';
+    if (scale) scale.innerHTML = '';
+    return;
+  }
+
+  const cell = {};
+  let maxCell = 0;
+  txs.forEach(t => {
+    const key = `${t.category}|${dayOfMonth(t.date)}`;
+    const amount = Number(t.amount);
+    cell[key] = (cell[key] || 0) + amount;
+    if (cell[key] > maxCell) maxCell = cell[key];
+  });
+
+  let html = '<thead><tr><th class="hm-cat">カテゴリ</th>';
+  for (let d = 1; d <= days; d++) html += `<th>${d}</th>`;
+  html += '<th class="hm-total">合計</th></tr></thead><tbody>';
+
+  cats.forEach((cat, i) => {
+    html += `<tr><td class="hm-cat"><span class="hm-dot" style="background:${colors[i]}"></span>${esc(cat)}</td>`;
+    for (let d = 1; d <= days; d++) {
+      const amount = cell[`${cat}|${d}`] || 0;
+      if (!amount) { html += '<td class="hm-zero">·</td>'; continue; }
+      const alpha = 0.12 + 0.78 * Math.sqrt(amount / maxCell);
+      const dark = alpha > 0.55;
+      html += `<td class="hm-cell${dark ? ' dark' : ''}" data-cat="${esc(cat)}" style="background:rgba(79,125,243,${alpha.toFixed(2)})" title="${esc(cat)} ${d}日 ${formatYen(amount)}">${amount.toLocaleString('ja-JP')}</td>`;
+    }
+    html += `<td class="hm-total">${catTotals[cat].toLocaleString('ja-JP')}</td></tr>`;
+  });
+
+  html += '</tbody><tfoot><tr><td class="hm-cat">日合計</td>';
+  for (let d = 1; d <= days; d++) {
+    const dayTotal = txs.filter(t => dayOfMonth(t.date) === d).reduce((s, t) => s + Number(t.amount), 0);
+    html += `<td>${dayTotal ? dayTotal.toLocaleString('ja-JP') : '·'}</td>`;
+  }
+  const grand = Object.values(catTotals).reduce((a, b) => a + b, 0);
+  html += `<td class="hm-total">${grand.toLocaleString('ja-JP')}</td></tr></tfoot>`;
+  table.innerHTML = html;
+
+  if (scale) {
+    scale.innerHTML = [0.12, 0.3, 0.45, 0.6, 0.75, 0.9]
+      .map(a => `<i style="background:rgba(79,125,243,${a})"></i>`).join('');
+  }
+
+  table.querySelectorAll('.hm-cell').forEach(td => {
+    td.addEventListener('click', () => {
+      state.expenseFilter = td.dataset.cat;
+      navigateTo('expenses');
+    });
+  });
+}
+
+/** 支出明細ページ（日別リスト + カテゴリ別合計） */
+function renderExpensesPage() {
+  const y = state.currentYear, m = state.currentMonth;
+  const txs = getMonthExpenseTx(y, m);
+  const listEl = document.getElementById('expense-day-list');
+  const chipsEl = document.getElementById('expense-filter-chips');
+  const sumEl = document.getElementById('expense-category-sum');
+  const totalEl = document.getElementById('expenses-total');
+  const noMsg = document.getElementById('no-expense-msg');
+  if (!listEl) return;
+
+  const catTotals = sumByCategory(txs);
+  const cats = Object.keys(catTotals).sort((a, b) => catTotals[b] - catTotals[a]);
+  if (state.expenseFilter && !cats.includes(state.expenseFilter)) state.expenseFilter = '';
+
+  const total = Object.values(catTotals).reduce((a, b) => a + b, 0);
+  if (totalEl) totalEl.textContent = `${txs.length}件 / ${formatYen(total)}`;
+
+  if (txs.length === 0) {
+    listEl.innerHTML = '';
+    chipsEl.innerHTML = '';
+    sumEl.innerHTML = '';
+    if (noMsg) noMsg.style.display = 'block';
+    return;
+  }
+  if (noMsg) noMsg.style.display = 'none';
+
+  // カテゴリ絞り込みチップ
+  chipsEl.innerHTML = `<button type="button" class="exp-chip${state.expenseFilter === '' ? ' active' : ''}" data-cat="">すべて</button>` +
+    cats.map(c => `<button type="button" class="exp-chip${state.expenseFilter === c ? ' active' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('');
+  chipsEl.querySelectorAll('.exp-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.expenseFilter = btn.dataset.cat;
+      renderExpensesPage();
+    });
+  });
+
+  // 日別リスト（新しい日付順）
+  const filtered = state.expenseFilter ? txs.filter(t => t.category === state.expenseFilter) : txs;
+  const byDay = {};
+  filtered.forEach(t => { (byDay[t.date] = byDay[t.date] || []).push(t); });
+  const dates = Object.keys(byDay).sort((a, b) => b.localeCompare(a));
+  const wdays = ['日', '月', '火', '水', '木', '金', '土'];
+
+  listEl.innerHTML = dates.map(date => {
+    const items = [...byDay[date]].sort((a, b) => Number(b.amount) - Number(a.amount));
+    const dayTotal = items.reduce((s, t) => s + Number(t.amount), 0);
+    const dt = new Date(`${date}T00:00:00`);
+    const [, mm, dd] = date.split('-');
+    return `<div class="exp-day">
+      <div class="exp-day-head">
+        <div class="exp-date">${mm}/${dd}<span class="exp-wday">(${wdays[dt.getDay()]})</span></div>
+        <div class="exp-day-total">${formatYen(dayTotal)}</div>
+      </div>
+      ${items.map(t => `<div class="exp-item">
+        <div class="exp-item-left">
+          <span class="exp-icon">${getCategoryIcon(t.category)}</span>
+          <span class="exp-cat">${esc(t.category)}</span>
+          <span class="exp-memo">${esc(t.memo || '')}</span>
+        </div>
+        <span class="exp-amount">${formatYen(t.amount)}</span>
+      </div>`).join('')}
+    </div>`;
+  }).join('');
+
+  // カテゴリ別合計
+  const maxCat = cats.length ? catTotals[cats[0]] : 0;
+  sumEl.innerHTML = cats.map(c => `
+    <div class="exp-cat-row">
+      <div class="exp-cat-name">${getCategoryIcon(c)} ${esc(c)}</div>
+      <div class="exp-cat-bar"><i style="width:${maxCat ? Math.max(2, catTotals[c] / maxCat * 100) : 0}%;background:${colorsForCategory(c, cats)}"></i></div>
+      <div class="exp-cat-value">${formatYen(catTotals[c])}</div>
+    </div>`).join('') +
+    `<div class="exp-cat-row total"><div class="exp-cat-name">合計</div><div></div><div class="exp-cat-value">${formatYen(total)}</div></div>`;
+}
+
+/** カテゴリの固定色（積み上げ棒と同じ並び順を再現） */
+function colorsForCategory(cat, cats) {
+  const colors = generateColors(cats.length);
+  const i = cats.indexOf(cat);
+  return colors[i >= 0 ? i : 0];
 }
 
 // ===================================================
