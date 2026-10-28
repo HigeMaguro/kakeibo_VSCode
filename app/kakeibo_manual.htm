@@ -227,7 +227,7 @@
     <header class="manual-header">
       <h1><i class="fas fa-book-open"></i> マイ家計簿 使い方マニュアル</h1>
       <p>毎日の家計管理をかんたんに — すべての機能の使い方を解説します</p>
-      <span class="ver">v4.0 / 2026年10月版・スクリーンショット付き</span>
+      <span class="ver">v4.1 / 2026年10月版・スクリーンショット付き</span>
     </header>
 
     <!-- ===== Back bar ===== -->
@@ -250,8 +250,9 @@
           <a class="toc-item" href="#accounts"><span class="toc-num">6</span>預金口座管理</a>
           <a class="toc-item" href="#link"><span class="toc-num">7</span>家計簿連携</a>
           <a class="toc-item" href="#mobile"><span class="toc-num">8</span>スマホ入力</a>
-          <a class="toc-item" href="#datamanage"><span class="toc-num">9</span>データ管理</a>
-          <a class="toc-item" href="#faq"><span class="toc-num">10</span>よくある質問</a>
+          <a class="toc-item" href="#expenses"><span class="toc-num">9</span>支出明細</a>
+          <a class="toc-item" href="#datamanage"><span class="toc-num">10</span>データ管理</a>
+          <a class="toc-item" href="#faq"><span class="toc-num">11</span>よくある質問</a>
         </div>
       </nav>
     </div>
@@ -482,7 +483,7 @@
     <section id="analysis">
       <div class="container">
         <h2><span class="num">05</span> 分析</h2>
-        <p class="section-lead">3種類のグラフで家計の傾向を分析します。</p>
+        <p class="section-lead">5種類のグラフで家計の傾向を分析します。</p>
         <figure class="shot">
           <img src="manual-images/analysis.png" alt="分析画面">
           <figcaption>分析: 月別収支比較・収入カテゴリ内訳・日別支出推移</figcaption>
@@ -505,6 +506,20 @@
             <p>選択中の月の日別累計支出を折れ線グラフで表示。支出が集中している日を把握できます。</p>
           </div>
         </div>
+
+        <h3><i class="fas fa-layer-group" style="color:var(--primary)"></i> 日別×カテゴリ 支出内訳 <span class="badge red">NEW</span></h3>
+        <p>日ごとの支出をカテゴリ別に積み上げて表示します。凡例をクリックするとカテゴリの表示/非表示を切り替えられ、その日に何にいくら使ったかを一目で確認できます。右上には合計・カテゴリ数・支出日数が表示されます。</p>
+        <figure class="shot">
+          <img src="manual-images/analysis-stack.png" alt="日別×カテゴリの積み上げ棒グラフ">
+          <figcaption>日別×カテゴリ 支出内訳: 日ごとの金額と内訳を同時に表示</figcaption>
+        </figure>
+
+        <h3><i class="fas fa-calendar-days" style="color:var(--primary)"></i> 支出カレンダー <span class="badge red">NEW</span></h3>
+        <p>日×カテゴリの表で、色の濃さが金額の大きさを表します。支出が無い日は「·」で空白になり、使った項目だけが浮かび上がります。セルをクリックすると、支出明細ページがそのカテゴリで絞り込まれた状態で開きます。</p>
+        <figure class="shot">
+          <img src="manual-images/analysis-heatmap.png" alt="支出カレンダー（ヒートマップ）">
+          <figcaption>支出カレンダー: いつ・どのカテゴリを使ったかが一目で分かる</figcaption>
+        </figure>
       </div>
     </section>
 
@@ -749,10 +764,38 @@
       </div>
     </section>
 
-    <!-- ===== 9. データ管理 ===== -->
-    <section id="datamanage">
+    <!-- ===== 9. 支出明細 ===== -->
+    <section id="expenses">
       <div class="container">
-        <h2><span class="num">09</span> データ管理</h2>
+        <h2><span class="num">09</span> 支出明細 <span class="badge red">NEW</span></h2>
+        <p class="section-lead">日付ごとに支出を並べ、カテゴリ別の合計も同時に確認できる画面です。</p>
+
+        <figure class="shot">
+          <img src="manual-images/expenses-list.png" alt="支出明細ページ">
+          <figcaption>支出明細: 日付ごとの明細・日合計・カテゴリ別合計</figcaption>
+        </figure>
+
+        <h3><i class="fas fa-filter" style="color:var(--primary)"></i> カテゴリで絞り込む</h3>
+        <p>上部のチップでカテゴリを選ぶと、そのカテゴリの明細だけが日付順に並びます。「すべて」を押すと解除されます。右側の「カテゴリ別合計」は絞り込みに関係なく月全体の合計を表示します。</p>
+        <figure class="shot">
+          <img src="manual-images/expenses-filter.png" alt="カテゴリで絞り込んだ支出明細">
+          <figcaption>「食費」で絞り込んだ例: 該当する明細と合計だけが残る</figcaption>
+        </figure>
+
+        <div class="callout info">
+          <div class="callout-icon">ℹ️</div>
+          <div class="callout-body">
+            <div class="callout-title">分析のカレンダーから直接開けます</div>
+            <div class="callout-text">分析ページの「支出カレンダー」でセルをクリックすると、そのカテゴリで絞り込んだ状態の支出明細が開きます。「この日のこの項目は何だったか」を確認するのに便利です。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 10. データ管理 ===== -->
+    <section id="datamanage" class="alt">
+      <div class="container">
+        <h2><span class="num">10</span> データ管理</h2>
         <p class="section-lead">Excel エクスポートと JSON バックアップ、バージョン確認を行う画面です。</p>
 
         <figure class="shot">
@@ -783,10 +826,10 @@
       </div>
     </section>
 
-    <!-- ===== 10. FAQ ===== -->
-    <section id="faq" class="alt">
+    <!-- ===== 11. FAQ ===== -->
+    <section id="faq">
       <div class="container">
-        <h2><span class="num">10</span> よくある質問</h2>
+        <h2><span class="num">11</span> よくある質問</h2>
         <p class="section-lead">よく寄せられる質問をまとめました。</p>
 
         <div class="card">
