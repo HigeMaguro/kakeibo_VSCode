@@ -50,7 +50,11 @@
     <!-- ヘッダー -->
     <header id="main-header">
       <button id="hamburger-btn" aria-label="メニュー"><i class="fas fa-bars"></i></button>
-      <h2 id="page-title">ダッシュボード</h2>
+      <div class="title-wrap">
+        <h2 id="page-title">ダッシュボード</h2>
+        <button type="button" id="app-version" class="app-version"
+          title="バージョン情報（クリックでデータ管理を開く）" aria-label="稼働中のアプリバージョン">Ver：—</button>
+      </div>
       <div class="header-actions">
         <div class="month-selector">
           <button id="prev-month" aria-label="前月"><i class="fas fa-chevron-left"></i></button>

@@ -42,6 +42,7 @@ const state = {
   incomeCategories:  [...INCOME_CATEGORIES_DEFAULT],
   inputType: 'expense',
   expenseFilter: '', // 支出明細ページのカテゴリ絞り込み
+  appVersion: null,  // /api/version の結果 (ヘッダー表示とデータ管理で共用)
   charts: {},
 };
 
@@ -1312,6 +1313,34 @@ function initSidebar() {
 }
 
 // ===================================================
+// ヘッダーのバージョン表示 (全ページ共通)
+// ===================================================
+async function loadAppVersion() {
+  const el = document.getElementById('app-version');
+  try {
+    const res = await fetch('api/version');
+    if (!res.ok) throw new Error('version fetch failed');
+    const info = await res.json();
+    state.appVersion = info;
+    if (el) {
+      el.textContent = `Ver：${info.version || '—'}`;
+      el.title = `ビルド: ${info.build_date || '-'} / Node ${info.node || '-'}（クリックでデータ管理）`;
+    }
+  } catch {
+    if (el) {
+      el.textContent = 'Ver：—';
+      el.title = 'バージョンを取得できませんでした';
+    }
+  }
+}
+
+function initVersionBadge() {
+  const el = document.getElementById('app-version');
+  if (!el) return;
+  el.addEventListener('click', () => navigateTo('datamanage'));
+}
+
+// ===================================================
 // データ管理ページ
 // ===================================================
 async function renderDataManagePage() {
@@ -1321,19 +1350,26 @@ async function renderDataManagePage() {
     desc.innerHTML = `${getMonthLabel(state.currentYear, state.currentMonth)}のデータを Excel (.xlsx) ファイルに出力します。<br>月別サマリー・収支データ・予算・預金口座・口座明細・集計・グラフが含まれます。`;
   }
 
-  try {
-    const res = await fetch('api/version');
-    if (!res.ok) throw new Error();
-    const info = await res.json();
-    const elV = document.getElementById('version-value');
-    const elB = document.getElementById('version-build-date');
-    const elN = document.getElementById('version-node');
+  let info = state.appVersion;
+  if (!info) {
+    try {
+      const res = await fetch('api/version');
+      if (!res.ok) throw new Error();
+      info = await res.json();
+      state.appVersion = info;
+    } catch {
+      info = null;
+    }
+  }
+  const elV = document.getElementById('version-value');
+  const elB = document.getElementById('version-build-date');
+  const elN = document.getElementById('version-node');
+  if (info) {
     if (elV) elV.textContent = info.version || '-';
     if (elB) elB.textContent = info.build_date || '-';
     if (elN) elN.textContent = info.node || '-';
-  } catch (e) {
-    const elV = document.getElementById('version-value');
-    if (elV) elV.textContent = '取得できませんでした';
+  } else if (elV) {
+    elV.textContent = '取得できませんでした';
   }
 }
 
@@ -1517,8 +1553,10 @@ async function init() {
   updateMonthLabel();
   initSidebar();
   bindEvents();
+  initVersionBadge();
 
-  await loadAllData();
+  // データとバージョン情報を並行取得 (バージョンは取れなくても致命的ではない)
+  await Promise.all([loadAllData(), loadAppVersion()]);
   // 月次サマリーバー (開始残高〜現金残高) とダッシュボードを両方描画する。
   // renderDashboard() だけだとサマリーバーが月を切り替えるまで ¥0 のままになる。
   refreshCurrentPage();

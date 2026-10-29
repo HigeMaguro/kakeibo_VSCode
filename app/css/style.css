@@ -251,8 +251,41 @@ body {
 #page-title {
   font-size: 18px;
   font-weight: 700;
-  flex: 1;
   color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* タイトル + バージョンバッジ */
+.title-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.app-version {
+  flex: none;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--text-muted);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 9px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--transition), border-color var(--transition), background var(--transition);
+}
+
+.app-version:hover {
+  color: var(--primary);
+  border-color: var(--primary);
+  background: var(--primary-light);
 }
 
 .header-actions { display: flex; align-items: center; gap: 12px; }
@@ -1065,8 +1098,13 @@ input::placeholder { color: var(--text-light); }
 }
 
 @media (max-width: 480px) {
-  #main-header { padding: 0 16px; gap: 10px; }
+  #main-header { padding: 0 16px; gap: 8px; }
   #current-month-label { min-width: 70px; font-size: 13px; }
+  .title-wrap { gap: 6px; }
+  #page-title { font-size: 16px; }
+  .app-version { font-size: 10px; padding: 1px 7px; }
+  /* 幅が足りないため、ヘッダーのスマホ入力ボタンは隠す (サイドバーとダッシュボードのバナーから開ける) */
+  #main-header .mobile-input-fab { display: none; }
 }
 
 /* サイドバーオーバーレイ (モバイル) */
