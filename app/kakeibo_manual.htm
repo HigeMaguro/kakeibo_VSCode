@@ -227,7 +227,7 @@
     <header class="manual-header">
       <h1><i class="fas fa-book-open"></i> マイ家計簿 使い方マニュアル</h1>
       <p>毎日の家計管理をかんたんに — すべての機能の使い方を解説します</p>
-      <span class="ver">v4.1 / 2026年10月版・スクリーンショット付き</span>
+      <span class="ver">v4.2 / 2026年10月版・バージョン表示対応</span>
     </header>
 
     <!-- ===== Back bar ===== -->
@@ -797,6 +797,14 @@
       <div class="container">
         <h2><span class="num">10</span> データ管理</h2>
         <p class="section-lead">Excel エクスポートと JSON バックアップ、バージョン確認を行う画面です。</p>
+
+        <div class="callout info">
+          <div class="callout-icon">ℹ️</div>
+          <div class="callout-body">
+            <div class="callout-title">ヘッダーのバージョン表示（全ページ共通）</div>
+            <div class="callout-text">ページ名の右に <strong>Ver：1.3.0</strong> のように稼働中のバージョンが表示されます。マウスを乗せるとビルド日時と Node.js のバージョン、クリックするとこの「データ管理」ページが開きます。表示はサーバー（<code>/api/version</code>）から取得するため、NAS 更新後は自動で新しい値になります。</div>
+          </div>
+        </div>
 
         <figure class="shot">
           <img src="manual-images/datamanage.png" alt="データ管理画面">

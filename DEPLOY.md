@@ -77,10 +77,17 @@ docker compose -f docker-compose.prod.yml logs -f   # Ctrl+C で抜ける
 
 ### UGOS Docker GUI で行う場合
 
-1. 「ファイル」で `docker/kakeibovs` フォルダーを作り、`docker-compose.prod.yml` をアップロード (ファイル名は `docker-compose.yml` に変えてよい)。
-2. 「Docker」→「プロジェクト」→「作成」→ パスに上記フォルダーを指定 → 作成。
-3. 更新時は「プロジェクト」→ 該当プロジェクト →「イメージを更新 (pull)」→「再作成」。更新前に `data/kakeibo.db` を手動でコピーしておくこと。
-4. `update-nas.sh` は **GUI からは実行できない**ため、GUI 運用だけなら配置は不要。SSH が使えるなら同じフォルダーに置いて `sh update-nas.sh` を使うと、DB の自動バックアップと起動確認まで行える (推奨)。スクリプトは `docker-compose.prod.yml` / `compose.yaml` / `docker-compose.yml` を自動検出するので、GUI が作ったファイル名のままで動く。
+GUI が作ったプロジェクトは **GUI で更新する**のが確実です。詳細手順・トラブル対処・ロールバックは
+**[docs/NAS_UPDATE_GUI.md](docs/NAS_UPDATE_GUI.md)** にまとめています（SSH 不要）。
+
+要点:
+1. `Docker` → `イメージ` → 取得（Pull）: `ghcr.io/higemaguro/kakeibo:<新バージョン>`
+2. `Docker` → `プロジェクト` → Compose設定 で **image のタグだけ**変更（`volumes` は触らない）
+3. 「再デプロイ」→ ヘッダーの `Ver：` と「データ管理」の版数・取引表示を確認
+4. 事前に「データ管理 → JSON バックアップ」で控えを取る（GUI 更新は自動バックアップなし）
+
+> プロジェクトが2つある場合は、**取引が見える方**が正しい対象。古い方は停止のみ（削除はデータ確認後）。
+> `update-nas.sh` は GUI プロジェクトとは別のプロジェクトを作ってしまうため、GUI 運用では使いません。
 
 ---
 

@@ -7,6 +7,7 @@ VS Code 専用プロジェクト (C# ランチャー無し)。
 |---|---|
 | 開発・デバッグ・機能拡張 | [DEVELOPMENT.md](DEVELOPMENT.md) |
 | NAS への配置・バージョン更新 | [DEPLOY.md](DEPLOY.md) |
+| **UGOS Docker GUI だけで更新する** | [docs/NAS_UPDATE_GUI.md](docs/NAS_UPDATE_GUI.md) |
 
 ## クイックスタート (開発 PC)
 
