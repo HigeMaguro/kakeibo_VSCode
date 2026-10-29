@@ -11,3 +11,6 @@ test
 .gitattributes
 docker-compose*.yml
 eslint.config.js
+
+# エディタのユーザー状態
+.vs
